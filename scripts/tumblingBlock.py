@@ -2,8 +2,7 @@
 # Rigid body tumbling: Euler dynamics + quaternion kinematics (Hamilton convention)
 
 import numpy as np
-from numpy.linalg import inv
-from qutils.integrators import ode87
+from qutils.integrators import ode45
 # ---------- Utilities ----------
 def skew(v):
     x, y, z = v
@@ -77,9 +76,8 @@ def simulate_rigidbody(
         x_fixed = np.hstack([qn, w])
         return euler_rhs(t, x_fixed, I_body, Iinv_body, torque_fn)
 
-    t,y = ode87(
+    t,y = ode45(
         rhs_renorm,
-
         t_span,
         x0,
         rtol=rtol,
