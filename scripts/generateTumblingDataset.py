@@ -201,8 +201,12 @@ if __name__ == "__main__":
         H[i,:,0] = np.linalg.norm(H_i, axis=1)
         T_i = 0.5 * np.sum(w * H_i, axis=1)
         T[i,:,0] = T_i
+        # recalc euler_rhs for entire time series to save
+        euler_rhs_series = np.zeros_like(y)
+        for j in range(num_steps):
+            euler_rhs_series[j,:] = euler_rhs(t[j], y[j,:], I, np.diag(1.0/np.array([I1,I2,I3])), lambda t,q,w: np.zeros(3))
         print(f"Simulated system {i+1}/{args.systems}", end='\r')
     
     print(f"\nSaving dataset to {args.output} ...")
-    np.savez_compressed(args.output, X=X, Y=Y, t_array=t_array, H=H, T=T,shapes=pickShape)
+    np.savez_compressed(args.output, X=X, Y=Y, t_array=t_array, H=H, T=T,shapes=pickShape,accelerations=euler_rhs_series)
     print("Done.")
