@@ -120,6 +120,7 @@ if __name__ == "__main__":
     I_list = []
     q_list = []
     w_list = []
+    m_list = []
     for shape in pickShape:
         m = np.random.uniform(1.0, 10.0)
 
@@ -168,6 +169,7 @@ if __name__ == "__main__":
         # Random angular velocity
         w0 = np.random.uniform(-5.0, 5.0, size=3)
         w_list.append(w0)
+        m_list.append(m)
 
     X = np.zeros((args.systems, num_steps, 7)) # time series of (q,w)
     Y = I_list # inertia tensors
@@ -208,5 +210,5 @@ if __name__ == "__main__":
         print(f"Simulated system {i+1}/{args.systems}", end='\r')
     
     print(f"\nSaving dataset to {args.output} ...")
-    np.savez_compressed(args.output, X=X, Y=Y, t_array=t_array, H=H, T=T,shapes=pickShape,accelerations=euler_rhs_series)
+    np.savez_compressed(args.output, X=X, Y=Y, t_array=t_array, H=H, T=T,shapes=pickShape,accelerations=euler_rhs_series,masses=m_list)
     print("Done.")
