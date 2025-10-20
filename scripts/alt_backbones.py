@@ -69,7 +69,7 @@ class _BaseEstimator(nn.Module):
 # ------------------ 1) Transformer encoder ------------------
 
 class TransformerEncoderEstimator(_BaseEstimator):
-    def __init__(self, d_model=192, n_layers=4, n_heads=6, d_ff=4*192, dropout=0.1, pool="mean"):
+    def __init__(self, d_model=192, n_layers=4, n_heads=8, d_ff=4*192, dropout=0.1, pool="mean"):
         super().__init__(d_model=d_model, pool=pool)
         layer = nn.TransformerEncoderLayer(
             d_model=d_model, nhead=n_heads, dim_feedforward=d_ff,
