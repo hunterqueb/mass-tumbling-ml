@@ -585,8 +585,32 @@ def main():
     ap.add_argument('--dmodel', type=int, default=64)
     ap.add_argument('--layers', type=int, default=2)
     ap.add_argument('--force', action='store_true', help='Force dataset regeneration')
-    
+    ap.add_argument('--save',action='store_true', help='Save logs from training')
     args = ap.parse_args()
+
+    if args.save:
+        import os
+        from datetime import datetime
+        log_dir = "logs/selfsup_mamba_" + datetime.now().strftime("%Y%m%d-%H%M%S")
+        os.makedirs(log_dir, exist_ok=True)
+        import sys
+        import shutil
+        # copy this script to log dir
+        shutil.copy(__file__, os.path.join(log_dir, os.path.basename(__file__)))
+        # redirect stdout to log file
+        log_file = open(os.path.join(log_dir, "train_log.txt"), "w")
+        class Tee(object):
+            def __init__(self, *files):
+                self.files = files
+            def write(self, obj):
+                for f in self.files:
+                    f.write(obj)
+                    f.flush()
+            def flush(self):
+                for f in self.files:
+                    f.flush()
+        sys.stdout = Tee(sys.stdout, log_file)
+        print("Logging to", log_dir)
 
     from qutils.ml import getDevice
     device = getDevice()
@@ -601,8 +625,8 @@ def main():
     file_path_train = Path("data/self-sup-train_" + str(args.T) + ".pt")
     file_path_val = Path("data/self-sup-val_" + str(args.T) + ".pt")
     if file_path_train.is_file() and file_path_val.is_file() and not args.force:
-        train_set = torch.load("data/self-sup-train_" + str(args.T) + ".pt",weights_only=False)
-        val_set = torch.load("data/self-sup-val_" + str(args.T) + ".pt",weights_only=False)
+        train_set = torch.load("data/self-sup-train_" + str(args.T) + ".pt",weights_only=False,map_location=device)
+        val_set = torch.load("data/self-sup-val_" + str(args.T) + ".pt",weights_only=False,map_location=device)
 
     else:    
         print("Generating datasets ...")
@@ -644,16 +668,6 @@ def main():
 
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch, shuffle=True, drop_last=True)
     val_loader   = torch.utils.data.DataLoader(val_set,   batch_size=args.batch, shuffle=False)
-
-    # model + trainer
-    model_mamba = InertiaMambaEstimator(d_model=args.dmodel, n_layers=args.layers).to(device)
-
-    from alt_backbones import build_estimator
-    model_lstm = build_estimator(kind="bilstm", d_model=args.dmodel, n_layers=args.layers).to(device)
-
-    tcfg = TrainCfg(lr=args.lr, wd=args.wd, lam_energy=args.lamE, lam_dyn=args.lamD, device=device)
-    trainer_mamba = InertiaTrainer(model_mamba, tcfg)
-    trainer_lstm = InertiaTrainer(model_lstm, tcfg)
 
     def train(model,trainer):
         # train
@@ -704,11 +718,29 @@ def main():
             f'{report["frame_angle_deg"]:.3f} deg  ({report["frame_angle_rad"]:.4f} rad)')
         print("axis match (pred i -> true j):", report["match_indices"])
 
+    # model + trainer
+
+    from alt_backbones import build_estimator
+    model_lstm = build_estimator(kind="bilstm", d_model=args.dmodel, n_layers=args.layers).to(device)
+    model_mamba = InertiaMambaEstimator(d_model=args.dmodel, n_layers=args.layers).to(device)
+    model_transformer = build_estimator(kind="transformer", d_model=args.dmodel, n_layers=args.layers).to(device)
+    model_tcn = build_estimator(kind="tcn", d_model=args.dmodel, n_layers=args.layers).to(device)
+
+    tcfg = TrainCfg(lr=args.lr, wd=args.wd, lam_energy=args.lamE, lam_dyn=args.lamD, device=device)
+    trainer_mamba = InertiaTrainer(model_mamba, tcfg)
+    trainer_lstm = InertiaTrainer(model_lstm, tcfg)
+    trainer_transformer = InertiaTrainer(model_transformer, tcfg)
+    trainer_tcn = InertiaTrainer(model_tcn, tcfg)
+
     print("training lstm")
     train(model_lstm,trainer_lstm)
     print("training mamba")
     train(model_mamba,trainer_mamba)
-
+    print("training transformer")
+    train(model_transformer,trainer_transformer)
+    print("training tcn")
+    train(model_tcn,trainer_tcn)
+    
 if __name__ == "__main__":
     main()
     plt.show()
