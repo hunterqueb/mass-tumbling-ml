@@ -612,6 +612,12 @@ def main():
                 for f in self.files:
                     f.flush()
         sys.stdout = Tee(sys.stdout, log_file)
+
+        # save args
+        with open(os.path.join(log_dir, "args.txt"), "w") as f:
+            for k,v in vars(args).items():
+                f.write(f"{k}: {v}\n")
+
         print("Logging to", log_dir)
 
     from qutils.ml import getDevice
