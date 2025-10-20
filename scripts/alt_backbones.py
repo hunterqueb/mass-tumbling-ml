@@ -84,7 +84,8 @@ class TransformerEncoderEstimator(_BaseEstimator):
         h = self.pool_tokens(z)              # (B,D)
         I = self.head(h)                     # (B,3,3) SPD, trace=1
         return I, h, z
-
+    def __str__(self):
+        return "transformer"
 # ------------------ 2) Temporal Convolutional Network (TCN) ------------------
 
 class Chomp1d(nn.Module):
@@ -129,7 +130,8 @@ class TCNEstimator(_BaseEstimator):
         h = self.pool_tokens(z)
         I = self.head(h)
         return I, h, z
-
+    def __str__(self):
+        return "tcn"
 # ------------------ 3) BiLSTM ------------------
 
 class BiLSTMEstimator(_BaseEstimator):
@@ -149,7 +151,8 @@ class BiLSTMEstimator(_BaseEstimator):
         h = self.pool_tokens(z)
         I = self.head(h)
         return I, h, z
-
+    def __str__(self):
+        return "bilstm"
 # ------------------ factory ------------------
 
 def build_estimator(kind="transformer", **kwargs):

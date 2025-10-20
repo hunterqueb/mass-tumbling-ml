@@ -465,6 +465,8 @@ class InertiaTrainer:
         I, h, z = self.model(w, q)
         return I, h, z
 
+    def __str__(self):
+        return "mamba"
 
 
 
@@ -718,6 +720,116 @@ def main():
             f'{report["frame_angle_deg"]:.3f} deg  ({report["frame_angle_rad"]:.4f} rad)')
         print("axis match (pred i -> true j):", report["match_indices"])
 
+    def validate(model,trainer):
+
+        modelStr = str(model)
+        print("Validation of model:", modelStr)
+        model.eval()
+
+        # analyze one sample
+        q,w,Itrue,_ = val_set[0]
+        I_hat,_,_ = trainer.infer(q.unsqueeze(0), w.unsqueeze(0))
+
+        I_pred_np = I_hat[0].cpu()
+        I_true_np = Itrue.cpu()
+
+    
+        report = principal_inertia_comparison(I_pred_np, I_true_np)
+
+        print("Pred I (trace=1):\n", np.array_str(np.array(I_pred_np), precision=4, suppress_small=True))
+        print("True I (trace=1):\n", np.array_str(np.array(I_true_np), precision=4, suppress_small=True))
+        print("\n--- Principal inertia comparison ---")
+        print("eigs_pred:", np.array_str(report["evals_pred"], precision=6))
+        print("eigs_true:", np.array_str(report["evals_true"], precision=6))
+        print("abs_err  :", np.array_str(report["abs_err"], precision=6))
+        print("rel_err  :", np.array_str(report["rel_err"], precision=6))
+        print("axis |cos|:", np.array_str(report["axis_cosines"], precision=6), 
+            "  mean=", f'{report["axis_alignment_mean"]:.4f}')
+        print("frame misalignment: "
+            f'{report["frame_angle_deg"]:.3f} deg  ({report["frame_angle_rad"]:.4f} rad)')
+        print("axis match (pred i -> true j):", report["match_indices"])
+
+        # visualize predicted vs true inertia ellipsoids
+        # define ellipsoid points
+        u = np.linspace(0, 2 * np.pi, 100)
+        v = np.linspace(0, np.pi, 100)
+        x = np.outer(np.cos(u), np.sin(v))
+        y = np.outer(np.sin(u), np.sin(v))
+        z = np.outer(np.ones_like(u), np.cos(v))
+        def plot_ellipsoid(I, ax, color='b', alpha=0.5, label=''):
+            # eigen-decomposition
+            evals, evecs = np.linalg.eigh(I)
+            # radii are proportional to sqrt of eigenvalues
+            rx, ry, rz = np.sqrt(evals)
+            # transform unit sphere points
+            ellipsoid_points = np.array([rx * x.flatten(), ry * y.flatten(), rz * z.flatten()])  # (3,N)
+            ellipsoid_transformed = evecs @ ellipsoid_points  # (3,N)
+            X = ellipsoid_transformed[0, :].reshape(x.shape)
+            Y = ellipsoid_transformed[1, :].reshape(y.shape)
+            Z = ellipsoid_transformed[2, :].reshape(z.shape)
+            ax.plot_surface(X, Y, Z, color=color, alpha=alpha, label=label)
+        fig = plt.figure(figsize=(8, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        plot_ellipsoid(I_true_np.numpy(), ax, color='g', alpha=0.5, label='True Inertia')
+        plot_ellipsoid(I_pred_np.numpy(), ax, color='r', alpha=0.5, label='Predicted Inertia')
+        ax.set_title('Inertia Ellipsoids')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        plt.legend()
+        plt.savefig(log_dir+"/inertia_ellipsoids_"+modelStr+".png")
+
+        # using the inertia matrices to compute energy and angular momentum and plot the error over time
+        I_pred_torch = I_hat[0].to(device)
+        I_true_torch = Itrue.to(device)
+        w_torch = w.to(device)
+        q_torch = q.to(device)
+        dt_val = as_scalar_dt(dt_sample)
+        Iw_pred = (I_pred_torch @ w_torch.unsqueeze(-1)).squeeze(-1)
+        Iw_true = (I_true_torch @ w_torch.unsqueeze(-1)).squeeze(-1)
+        E_pred = 0.5 * (w_torch * Iw_pred).sum(-1)
+        E_true = 0.5 * (w_torch * Iw_true).sum(-1)
+        L_pred = (quat_to_R(q_torch) @ Iw_pred.unsqueeze(-1)).squeeze(-1)
+        L_true = (quat_to_R(q_torch) @ Iw_true.unsqueeze(-1)).squeeze(-1)
+        time_array = np.arange(0, args.T, args.dt)[:q.shape[0]]
+        plt.figure(figsize=(12, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(time_array, E_pred.cpu().numpy(), label='Predicted Energy')
+        plt.plot(time_array, E_true.cpu().numpy(), label='True Energy')
+        plt.title('Rotational Kinetic Energy')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Energy (J)')
+        plt.legend()
+        plt.grid()
+        plt.subplot(1, 2, 2)
+        plt.plot(time_array, np.linalg.norm(L_pred.cpu().numpy(), axis=-1), label='Predicted |L|')
+        plt.plot(time_array, np.linalg.norm(L_true.cpu().numpy(), axis=-1), label='True |L|')
+        plt.title('Angular Momentum Magnitude')
+        plt.xlabel('Time (s)')
+        plt.ylabel('|L| (kg·m²/s)')
+        plt.legend()
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig(log_dir+"/energy_angular_momentum_"+modelStr+".png")
+
+        plt.figure(figsize=(12, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(time_array, np.abs(E_pred.cpu().numpy() - E_true.cpu().numpy()), label='Energy Error')
+        plt.title('Energy Conservation Error')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Absolute Error (J)')
+        plt.legend()
+        plt.grid()
+        plt.subplot(1, 2, 2)
+        plt.plot(time_array, np.linalg.norm(L_pred.cpu().numpy() - L_true.cpu().numpy(), axis=-1), label='Angular Momentum Error')
+        plt.title('Angular Momentum Conservation Error')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Absolute Error (kg·m²/s)')
+        plt.legend()
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig(log_dir+"/conservation_errors_"+modelStr+".png")
+
     # model + trainer
 
     from alt_backbones import build_estimator
@@ -734,13 +846,20 @@ def main():
 
     print("training lstm")
     train(model_lstm,trainer_lstm)
+    validate(model_lstm,trainer_lstm)
     print("training mamba")
     train(model_mamba,trainer_mamba)
+    validate(model_mamba,trainer_mamba)
     print("training transformer")
     train(model_transformer,trainer_transformer)
+    validate(model_transformer,trainer_transformer)
     print("training tcn")
     train(model_tcn,trainer_tcn)
-    
+    validate(model_tcn,trainer_tcn)
+
+
+    if not args.save:
+        plt.show()
+
 if __name__ == "__main__":
     main()
-    plt.show()
