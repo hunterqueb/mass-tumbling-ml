@@ -21,19 +21,18 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# ---- bring in your backbone ----
-try:
-    from qutils.ml.mamba import Mamba, MambaConfig   # adjust to your module path
-except Exception as e:
-    raise ImportError(
-        "Cannot import Mamba/MambaConfig. Ensure your file exposes "
-        "`Mamba` and `MambaConfig` as in the snippet you shared."
-    ) from e
+import matplotlib.pyplot as plt
+
+from qutils.integrators import ode45
+from qutils.ml.mamba import Mamba, MambaConfig 
 
 # ======================== math utils ========================
 
 def normalize_quat(q: torch.Tensor) -> torch.Tensor:
     return q / (q.norm(dim=-1, keepdim=True) + 1e-12)
+# normalize quat np version
+def normalize_quat_np(q: np.ndarray) -> np.ndarray:
+    return q / (np.linalg.norm(q) + 1e-12)
 
 def quat_to_R(q: torch.Tensor) -> torch.Tensor:
     """q (...,4) scalar-first -> R (...,3,3)"""
@@ -85,42 +84,23 @@ def as_scalar_dt(dt):
 
 @torch.no_grad()
 def _project_spd(I, min_eig=1e-6):
-    """
-    Batch project to SPD:
-      1) symmetrize
-      2) clamp eigenvalues to >= min_eig
-      3) renormalize trace to 1
-      4) replace non-finite with I/3
-    I: (N,3,3)
-    """
-    I = I.clone()
-    # sanitize
-    finite = torch.isfinite(I).all(dim=(-2,-1), keepdim=True)
-    I[~finite.expand_as(I)] = 0.0
+    # Sanitize non-finite entries
+    finite = torch.isfinite(I).all(dim=-1, keepdim=True).all(dim=-2, keepdim=True)
+    if not finite.all():
+        I = I.clone()
+        I[~finite.expand_as(I)] = 0.0
 
-    # symmetrize
-    I = 0.5 * (I + I.transpose(-1,-2))
+    # Symmetrize
+    I = 0.5 * (I + I.transpose(-1, -2))
 
-    # eig
-    evals, evecs = torch.linalg.eigh(I.double())   # better conditioning in float64
-    evals = evals.float(); evecs = evecs.float()
+    # Eigen-decompose
+    evals, evecs = torch.linalg.eigh(I.double())
+    evals = torch.clamp(evals, min=min_eig).float()
+    I_spd = (evecs.float() @ torch.diag_embed(evals) @ evecs.float().transpose(-1, -2))
 
-    # clamp
-    evals = torch.clamp(evals, min=min_eig)
-
-    # reconstruct
-    I_spd = evecs @ torch.diag_embed(evals) @ evecs.transpose(-1,-2)
-
-    # trace normalize
+    # Normalize trace
     tr = torch.diagonal(I_spd, dim1=-2, dim2=-1).sum(-1, keepdim=True).unsqueeze(-1)
     I_spd = I_spd / (tr + 1e-12)
-
-    # final sanitize (if something still blew up)
-    mask_bad = ~torch.isfinite(I_spd).all(dim=(-2,-1), keepdim=True)
-    if mask_bad.any():
-        eye = torch.eye(3, device=I_spd.device, dtype=I_spd.dtype).unsqueeze(0) / 3.0
-        I_spd[mask_bad.expand_as(I_spd)] = eye.expand(mask_bad.sum(), 3, 3)
-
     return I_spd
 
 @torch.no_grad()
@@ -158,60 +138,96 @@ def eig_ratio_axis_metrics(I_pred, I_true, min_eig=1e-6):
 
 # ======================== synthetic torque-free sim ========================
 
-def sample_inertia(batch, device, min_ratio=0.05):
+def sample_inertia(batch, device=None, min_ratio=0.05):
     # ensure eigenvalues not arbitrarily small (≥ min_ratio of trace)
-    alphas = torch.tensor([2.0,2.0,2.0], device=device)
-    g = torch.distributions.Gamma(alphas, torch.ones_like(alphas))
-    eig = g.sample((batch,))
-    eig = eig / eig.sum(dim=-1, keepdim=True)
-    eig = torch.clamp(eig, min=min_ratio)
-    eig = eig / eig.sum(dim=-1, keepdim=True)
-    M = torch.randn(batch,3,3, device=device)
-    Q,_ = torch.linalg.qr(M); det = torch.linalg.det(Q)
-    Q[det<0,:,0] = -Q[det<0,:,0]
-    return Q @ torch.diag_embed(eig) @ Q.transpose(-1,-2)
-
-def omega_to_quatdot(q: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-    """qdot = 0.5 * q * [0, w] (Hamilton product, scalar-first)."""
-    w0 = torch.zeros_like(w[..., :1])
-    wq = torch.cat([w0, w], dim=-1)
-    # Hamilton product q * wq:
-    w1,x1,y1,z1 = q.unbind(-1)
-    w2,x2,y2,z2 = wq.unbind(-1)
-    return 0.5*torch.stack([
-        w1*w2 - x1*x2 - y1*y2 - z1*z2,
-        w1*x2 + x1*w2 + y1*z2 - z1*y2,
-        w1*y2 - x1*z2 + y1*w2 + z1*x2,
-        w1*z2 + x1*y2 - y1*x2 + z1*w2
-    ], dim=-1)
+    alphas = np.array([2.0, 2.0, 2.0])
+    eig = np.random.gamma(alphas, 1.0, size=(batch, 3))
+    eig = eig / eig.sum(axis=-1, keepdims=True)
+    eig = np.clip(eig, min_ratio, None)
+    eig = eig / eig.sum(axis=-1, keepdims=True)
+    M = np.random.randn(batch, 3, 3)
+    Q = np.empty_like(M)
+    for i in range(batch):
+        q, _ = np.linalg.qr(M[i])
+        if np.linalg.det(q) < 0:
+            q[:, 0] = -q[:, 0]
+        Q[i] = q
+    I = np.matmul(Q, np.matmul(np.expand_dims(np.diagflat(eig[0]), 0) if batch == 1 else np.array([np.diag(e) for e in eig]), Q.transpose(0, 2, 1)))
+    return I
 
 @torch.no_grad()
-def simulate_torque_free(I: torch.Tensor, q0: torch.Tensor, w0: torch.Tensor, T: float, dt: float,
+def omega_mat(w):
+    wx, wy, wz = w
+    return np.array([
+        [0.0, -wx, -wy, -wz],
+        [wx,  0.0,  wz, -wy],
+        [wy, -wz,  0.0,  wx],
+        [wz,  wy, -wx,  0.0]
+    ], dtype=float)
+
+
+@torch.no_grad()
+def euler_rhs(t, x, I_body, Iinv_body, torque_fn):
+    """
+    State x = [q(4), w(3)], q Hamilton (scalar-first), body-frame angular velocity w.
+    I_body constant in body frame (3x3 symmetric positive-definite).
+    torque_fn(t, q, w) returns external torque in body frame (3,).
+    """
+    q = x[:4]
+    w = x[4:]
+
+    # Quaternion kinematics: qdot = 0.5 * Omega(w) * q
+    qdot = 0.5 * omega_mat(w) @ q
+
+    # Euler rotational dynamics in body frame: I wdot + w x (I w) = tau
+    H = I_body @ w
+    tau = torque_fn(t, q, w)
+    wdot = Iinv_body @ (tau - np.cross(w, H))
+
+    return np.hstack([qdot, wdot])
+
+
+@torch.no_grad()
+def simulate_torque_free(I, q0, w0, T: float, dt: float,device,
                          noise_std: float=0.0) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Semi-implicit Euler for w, first-order for q. Returns q:(S,4), w:(S,3) with S=int(T/dt)."""
-    device = I.device
+    torque_fn=lambda t, q, w: np.zeros(3)
+    
     steps = int(T/dt)
-    qs = torch.empty(steps, 4, device=device)
-    ws = torch.empty(steps, 3, device=device)
 
-    q = q0
-    w = w0
-    Iw = I @ w.unsqueeze(-1)
-    for t in range(steps):
-        qs[t] = q
-        ws[t] = w
-        # torque-free Euler: I wdot = (I w) x w
-        torque_like = torch.cross(Iw.squeeze(-1), w, dim=-1)
-        wdot = torch.linalg.solve(I, torque_like)
-        w = w + dt*wdot
-        Iw = I @ w.unsqueeze(-1)
-        q = q + dt*omega_to_quatdot(q, w)
-        q = normalize_quat(q)
+    Iinv_body = np.linalg.inv(I)
 
-    if noise_std > 0:
-        ws = ws + noise_std*torch.randn_like(ws)
+    x0 = np.hstack([normalize_quat_np(np.asarray(q0, dtype=float)), np.asarray(w0, dtype=float)])
+
+    def rhs_renorm(t, x):
+        # Drift control: renormalize q in-place every call to keep unit length
+        q = x[:4]; w = x[4:]
+        qn = q / max(1e-15, np.linalg.norm(q))
+        x_fixed = np.hstack([qn, w])
+        return euler_rhs(t, x_fixed, I, Iinv_body, torque_fn)
+
+    t,y = ode45(
+        rhs_renorm,
+        [0,T],
+        x0,
+        t_eval=np.linspace(0, T, steps),
+    )
+
+    # Final renormalization on output
+    qs = y[:, :4]
+    norms = np.linalg.norm(qs, axis=0)
+    y[:, :4] = qs / norms
+
+    ws = y[:, 4:]
+
+
+    # add noise
+    if noise_std > 0.0:
+        ws += np.random.randn(*ws.shape) * noise_std
+
+    qs = torch.tensor(y[:, :4], device=device)
+    ws = torch.tensor(ws, device=device)
     return qs, ws
-
+    
 class TorqueFreeDataset(torch.utils.data.Dataset):
     def __init__(self, N=2048, T=4.0, dt=0.01, device="cpu",
                  w0_mag_range=(0.2, 2.0), noise_std=0.002):
@@ -220,23 +236,39 @@ class TorqueFreeDataset(torch.utils.data.Dataset):
         self.I_true=[]; self.q=[]; self.w=[]
         for _ in range(N):
             I = sample_inertia(1, device=device)[0]
-            axis = torch.randn(3, device=device); axis = axis/axis.norm()
-            ang = torch.rand((), device=device)*2*math.pi
-            q0 = torch.tensor([math.cos(ang/2), *(math.sin(ang/2)*axis)], device=device)
-            mag = torch.empty((), device=device).uniform_(*w0_mag_range)
-            v = torch.randn(3, device=device); v = v / (v.norm()+1e-9)
+            axis = np.random.randn(3); axis = axis/np.linalg.norm(axis)
+            ang = np.random.rand()*2*math.pi
+            q0 = np.array([math.cos(ang/2), *(math.sin(ang/2)*axis)])
+            mag = np.random.randn(3) * (w0_mag_range[1]-w0_mag_range[0]) + w0_mag_range[0]
+            v = np.random.randn(3); v = v / (np.linalg.norm(v)+1e-9)
             w0 = mag * v
-            q, w = simulate_torque_free(I, q0, w0, T, dt, noise_std=noise_std)
-            self.I_true.append(I.cpu()); self.q.append(q.cpu()); self.w.append(w.cpu())
+            q, w = simulate_torque_free(I, q0, w0, T, dt, device=device, noise_std=noise_std)
+            self.I_true.append(I); self.q.append(q); self.w.append(w)
             print(f"Generated sample {len(self.I_true)}/{N}", end='\r')
-        self.I_true = torch.stack(self.I_true)  # (N,3,3)
-        self.q = torch.stack(self.q)            # (N,S,4)
-        self.w = torch.stack(self.w)            # (N,S,3)
-        
+        self.I_true = torch.tensor(np.array(self.I_true),device=device,dtype=torch.float32)  # (N,3,3)
+        self.q = torch.stack(self.q)             # (N,S,4)
+        self.q = self.q.float()
+        self.w = torch.stack(self.w)             # (N,S,3)
+        self.w = self.w.float()
+
     def __len__(self): return self.N
     def __getitem__(self, i):
         return self.q[i], self.w[i], self.I_true[i], self.dt
+    def convert_to_float64(self):
+        self.I_true = self.I_true.double()
+        self.q = self.q.double()
+        self.w = self.w.double()
 
+    def convert_to_float32(self):
+        self.I_true = self.I_true.float()
+        self.q = self.q.float()
+        self.w = self.w.float()
+
+    def to(self, device):
+        self.I_true = self.I_true.to(device)
+        self.q = self.q.to(device)
+        self.w = self.w.to(device)
+        self.device = device
 # ======================== model ========================
 
 class InertiaHead(nn.Module):
@@ -540,34 +572,37 @@ def principal_inertia_comparison(I_pred, I_true):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--epochs', type=int, default=100)
-    ap.add_argument('--batch', type=int, default=4)
-    ap.add_argument('--T', type=float, default=4.0)
+    ap.add_argument('--batch', type=int, default=16)
+    ap.add_argument('--T', type=float, default=3.0)
     ap.add_argument('--dt', type=float, default=0.01)
     ap.add_argument('--trainN', type=int, default=2000)
     ap.add_argument('--valN', type=int, default=300)
-    ap.add_argument('--device', type=str, default='cuda')
     ap.add_argument('--lr', type=float, default=2e-4)
     ap.add_argument('--wd', type=float, default=1e-4)
-    ap.add_argument('--lamE', type=float, default=0.1)
-    ap.add_argument('--lamD', type=float, default=1.0)
+    ap.add_argument('--lamE', type=float, default=1.0)
+    ap.add_argument('--lamD', type=float, default=0)
     ap.add_argument('--noise', type=float, default=0.002)
     ap.add_argument('--dmodel', type=int, default=64)
     ap.add_argument('--layers', type=int, default=2)
+    ap.add_argument('--force', action='store_true', help='Force dataset regeneration')
+    
     args = ap.parse_args()
 
-    device = args.device if (args.device=='cpu' or torch.cuda.is_available()) else 'cpu'
+    from qutils.ml import getDevice
+    device = getDevice()
 
+    print("Using device:", device)
     # datasets
 
     # if data/self-sup-data.npz does not exist, generate datasets and save
 
     from pathlib import Path
-
-    file_path_train = Path("data/self-sup-train.pt")
-    file_path_val = Path("data/self-sup-val.pt")
-    if file_path_train.is_file() and file_path_val.is_file():
-        train_set = torch.load("data/self-sup-train.pt",weights_only=False)
-        val_set = torch.load("data/self-sup-val.pt",weights_only=False)
+ 
+    file_path_train = Path("data/self-sup-train_" + str(args.T) + ".pt")
+    file_path_val = Path("data/self-sup-val_" + str(args.T) + ".pt")
+    if file_path_train.is_file() and file_path_val.is_file() and not args.force:
+        train_set = torch.load("data/self-sup-train_" + str(args.T) + ".pt",weights_only=False)
+        val_set = torch.load("data/self-sup-val_" + str(args.T) + ".pt",weights_only=False)
 
     else:    
         print("Generating datasets ...")
@@ -576,17 +611,45 @@ def main():
         print()
         print(" Validation set:")
         val_set   = TorqueFreeDataset(N=args.valN,   T=args.T, dt=args.dt, device=device, noise_std=args.noise)
-        torch.save(train_set,"data/self-sup-train.pt")
-        torch.save(val_set,"data/self-sup-val.pt")
+        torch.save(train_set,"data/self-sup-train_" + str(args.T) + ".pt")
+        torch.save(val_set,"data/self-sup-val_" + str(args.T) + ".pt")
+        print()
+
+    # plot a random sample from a set
+    sample_idx = np.random.randint(0, len(val_set))
+    q_sample, w_sample, I_sample, dt_sample = val_set[sample_idx]
+    time_array = np.arange(0, args.T, args.dt)[:q_sample.shape[0]]
+    plt.figure(figsize=(12, 5))
+    plt.subplot(1, 2, 1)
+    plt.plot(time_array, w_sample.cpu().numpy())
+    plt.title('Angular Velocity (omega)')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Omega (rad/s)')
+    plt.legend(['omega_x', 'omega_y', 'omega_z'])
+    plt.grid()
+    plt.subplot(1, 2, 2)
+    plt.plot(time_array, q_sample.cpu().numpy())
+    plt.title('Orientation (Quaternion)')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Quaternion Components')
+    plt.legend(['q_w', 'q_x', 'q_y', 'q_z'])
+    plt.grid()
+    plt.tight_layout()
+
+
+    train_set.convert_to_float32()
+    val_set.convert_to_float32()
+    train_set.to(device)
+    val_set.to(device)
 
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch, shuffle=True, drop_last=True)
     val_loader   = torch.utils.data.DataLoader(val_set,   batch_size=args.batch, shuffle=False)
 
     # model + trainer
-    model_mamba = InertiaMambaEstimator(d_model=args.dmodel, n_layers=args.layers)
+    model_mamba = InertiaMambaEstimator(d_model=args.dmodel, n_layers=args.layers).to(device)
 
     from alt_backbones import build_estimator
-    model_lstm = build_estimator(kind="bilstm", d_model=args.dmodel, n_layers=args.layers)
+    model_lstm = build_estimator(kind="bilstm", d_model=args.dmodel, n_layers=args.layers).to(device)
 
     tcfg = TrainCfg(lr=args.lr, wd=args.wd, lam_energy=args.lamE, lam_dyn=args.lamD, device=device)
     trainer_mamba = InertiaTrainer(model_mamba, tcfg)
@@ -609,7 +672,7 @@ def main():
                 Ipred=[]; Itrue=[]
                 for q,w,I,dt in val_loader:
                     q=q.to(device); w=w.to(device); Itrue.append(I)
-                    I_hat,_,_ = trainer.infer(q,w); Ipred.append(I_hat.cpu())
+                    I_hat,_,_ = trainer.infer(q,w); Ipred.append(I_hat)
                     dt_val = as_scalar_dt(dt)
                     l,t = trainer.loss_fn(q,w,I_hat,dt_val)
                     vals.append(float(l)); Lc.append(float(t['L_const'])); Ec.append(float(t['E_const'])); Dc.append(float(t['Euler']))
@@ -641,10 +704,11 @@ def main():
             f'{report["frame_angle_deg"]:.3f} deg  ({report["frame_angle_rad"]:.4f} rad)')
         print("axis match (pred i -> true j):", report["match_indices"])
 
-    print("training mamba")
-    train(model_mamba,trainer_mamba)
     print("training lstm")
     train(model_lstm,trainer_lstm)
+    print("training mamba")
+    train(model_mamba,trainer_mamba)
 
 if __name__ == "__main__":
     main()
+    plt.show()
