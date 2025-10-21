@@ -222,7 +222,7 @@ def simulate_torque_free(I, q0, w0, T: float, dt: float,device,
     qs = torch.tensor(y[:, :4], device=device)
     ws = torch.tensor(ws, device=device)
     
-    qs, ws = add_sensor_noise(qs,ws,gyro_std=0.0, att_std_deg=0.0, device=device)
+    qs, ws = add_sensor_noise(qs,ws,gyro_std=noise_std, att_std_deg=noise_std, device=device)
 
     return qs, ws
 
