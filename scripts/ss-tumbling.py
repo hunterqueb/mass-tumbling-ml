@@ -422,17 +422,54 @@ class PhysicsLoss(nn.Module):
         E = torch.nan_to_num(E, nan=0.0, posinf=0.0, neginf=0.0)
         loss_E = E.var(dim=1, unbiased=False)
 
-        dyn    = (I64[:,None,:,:] @ wdot[...,None]).squeeze(-1) + torch.cross(w_s, Iw, dim=-1)
-        dyn    = torch.nan_to_num(dyn, nan=0.0, posinf=0.0, neginf=0.0)
-        loss_D = (dyn**2).sum(dim=-1)
+        loss_tau, _ = self.dynamics_losses(I64, w_s, wdot, mode="tau_residual")
+        loss_D = loss_tau  # rename to keep your total-loss code unchanged
 
         # sanitize per-sequence mean, then mean over batch
         loss_L = torch.nan_to_num(loss_L.mean(dim=1), nan=0.0).mean()
-        loss_E = torch.nan_to_num(loss_E,              nan=0.0).mean()
-        loss_D = torch.nan_to_num(loss_D.mean(dim=1), nan=0.0).mean()
+        loss_E = torch.nan_to_num(loss_E,             nan=0.0).mean()
+        loss_D = torch.nan_to_num(loss_D,             nan=0.0).mean()
 
         loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D).float()
         return loss, {'L_const': loss_L.float(), 'E_const': loss_E.float(), 'Euler': loss_D.float()}
+
+    def dynamics_losses(self,I64, w_s, wdot, tau=None, mode="wdot_residual"):
+        """
+        mode = 'tau_residual' -> || tau - (I wdot + w x (I w)) ||^2
+        mode = 'wdot_residual' -> || wdot - I^{-1}(tau - w x (I w)) ||^2
+        If tau is None, both reduce to the torque-free form.
+        Returns: loss_D (scalar tensor), tau_pred (B,T,3) for diagnostics
+        """
+        # I w
+        Iw = (I64[:, None, :, :] @ w_s[..., None]).squeeze(-1)  # (B,T,3)
+        cross = torch.cross(w_s, Iw, dim=-1)                    # (B,T,3)
+
+        if tau is None:
+            # torque-free fallback
+            tau = torch.zeros_like(cross)
+
+        tau = tau.to(w_s.dtype)
+
+        if mode == "tau_residual":
+            # predict torque from measured wdot
+            tau_pred = (I64[:, None, :, :] @ wdot[..., None]).squeeze(-1) + cross  # (B,T,3)
+            resid = tau - tau_pred
+            resid = torch.nan_to_num(resid, nan=0.0, posinf=0.0, neginf=0.0)
+            loss_D = (resid**2).sum(dim=-1).mean()  # mean over time and batch
+            return loss_D, tau_pred
+
+        elif mode == "wdot_residual":
+            # predict wdot from measured tau
+            rhs = tau - cross                                         # (B,T,3)
+            A = I64[:, None, :, :].expand(-1, rhs.size(1), -1, -1)    # (B,T,3,3)
+            wdot_model = torch.linalg.solve(A, rhs[..., None]).squeeze(-1)  # (B,T,3)
+            resid = wdot - wdot_model
+            resid = torch.nan_to_num(resid, nan=0.0, posinf=0.0, neginf=0.0)
+            loss_D = (resid**2).sum(dim=-1).mean()
+            return loss_D, None
+
+        else:
+            raise ValueError("mode must be 'tau_residual' or 'wdot_residual'")
 
 # ======================== trainer ========================
 
@@ -581,7 +618,7 @@ def main():
     ap.add_argument('--lr', type=float, default=2e-4)
     ap.add_argument('--wd', type=float, default=1e-4)
     ap.add_argument('--lamE', type=float, default=1.0)
-    ap.add_argument('--lamD', type=float, default=0)
+    ap.add_argument('--lamD', type=float, default=0.1)
     ap.add_argument('--noise', type=float, default=0.002)
     ap.add_argument('--dmodel', type=int, default=64)
     ap.add_argument('--layers', type=int, default=2)
