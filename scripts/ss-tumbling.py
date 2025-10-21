@@ -202,10 +202,6 @@ def simulate_torque_free(I, q0, w0, T: float, dt: float,device,
         # Drift control: renormalize q in-place every call to keep unit length
         q = x[:4]; w = x[4:]
         qn = q / max(1e-15, np.linalg.norm(q))
-        # ----- noise injection on angular velocity -----
-        if noise_std > 0.0:
-            w = w + np.random.randn(3) * noise_std
-        # ----------------------------------------------
 
         x_fixed = np.hstack([qn, w])
         return euler_rhs(t, x_fixed, I, Iinv_body, torque_fn)
@@ -221,13 +217,40 @@ def simulate_torque_free(I, q0, w0, T: float, dt: float,device,
     qs = y[:, :4]
     norms = np.linalg.norm(qs, axis=0)
     y[:, :4] = qs / norms
-
     ws = y[:, 4:]
 
     qs = torch.tensor(y[:, :4], device=device)
     ws = torch.tensor(ws, device=device)
-    return qs, ws
     
+    qs, ws = add_sensor_noise(qs,ws,gyro_std=0.0, att_std_deg=0.0, device=device)
+
+    return qs, ws
+
+def add_sensor_noise(qs_t, ws_t, gyro_std=0.002, att_std_deg=0.0, device='cpu'):
+    # gyro noise: additive per-sample std (rad/s)
+    ws_noisy = ws_t + torch.randn_like(ws_t) * gyro_std
+    if att_std_deg <= 0:
+        return qs_t, ws_noisy
+    # small attitude noise: apply small random rotations to each q
+    att_std = np.deg2rad(att_std_deg)
+    B,T = 1, qs_t.shape[0]
+    qs = qs_t.cpu().numpy()
+    rng = np.random.default_rng()
+    for k in range(T):
+        axis = rng.standard_normal(3); axis /= np.linalg.norm(axis) + 1e-12
+        ang = rng.normal(0.0, att_std)
+        dq = np.array([np.cos(ang/2), *(np.sin(ang/2)*axis)], float)
+        # quaternion multiply dq ⊗ q
+        w1,x1,y1,z1 = dq; w2,x2,y2,z2 = qs[k]
+        qs[k] = np.array([
+            w1*w2 - x1*x2 - y1*y2 - z1*z2,
+            w1*x2 + x1*w2 + y1*z2 - z1*y2,
+            w1*y2 - x1*z2 + y1*w2 + z1*x2,
+            w1*z2 + x1*y2 - y1*x2 + z1*w2
+        ], float)
+        qs[k] /= np.linalg.norm(qs[k]) + 1e-12
+    return torch.tensor(qs, device=device), ws_noisy
+
 class TorqueFreeDataset(torch.utils.data.Dataset):
     def __init__(self, N=2048, T=4.0, dt=0.01, device="cpu",
                  w0_mag_range=(0.2, 2.0), noise_std=0.002):
@@ -819,7 +842,8 @@ def main():
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
         plt.legend()
-        plt.savefig(log_dir+"/inertia_ellipsoids_"+modelStr+".png")
+        if args.save:
+            plt.savefig(log_dir+"/inertia_ellipsoids_"+modelStr+".png")
 
         # using the inertia matrices to compute energy and angular momentum and plot the error over time
         I_pred_torch = I_hat[0].to(device)
@@ -852,7 +876,8 @@ def main():
         plt.legend()
         plt.grid()
         plt.tight_layout()
-        plt.savefig(log_dir+"/energy_angular_momentum_"+modelStr+".png")
+        if args.save:
+            plt.savefig(log_dir+"/energy_angular_momentum_"+modelStr+".png")
 
         plt.figure(figsize=(12, 5))
         plt.subplot(1, 2, 1)
@@ -870,7 +895,8 @@ def main():
         plt.legend()
         plt.grid()
         plt.tight_layout()
-        plt.savefig(log_dir+"/conservation_errors_"+modelStr+".png")
+        if args.save:
+            plt.savefig(log_dir+"/conservation_errors_"+modelStr+".png")
 
     # model + trainer
 
