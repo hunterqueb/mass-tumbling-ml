@@ -202,6 +202,11 @@ def simulate_torque_free(I, q0, w0, T: float, dt: float,device,
         # Drift control: renormalize q in-place every call to keep unit length
         q = x[:4]; w = x[4:]
         qn = q / max(1e-15, np.linalg.norm(q))
+        # ----- noise injection on angular velocity -----
+        if noise_std > 0.0:
+            w = w + np.random.randn(3) * noise_std
+        # ----------------------------------------------
+
         x_fixed = np.hstack([qn, w])
         return euler_rhs(t, x_fixed, I, Iinv_body, torque_fn)
 
@@ -218,11 +223,6 @@ def simulate_torque_free(I, q0, w0, T: float, dt: float,device,
     y[:, :4] = qs / norms
 
     ws = y[:, 4:]
-
-
-    # add noise
-    if noise_std > 0.0:
-        ws += np.random.randn(*ws.shape) * noise_std
 
     qs = torch.tensor(y[:, :4], device=device)
     ws = torch.tensor(ws, device=device)
