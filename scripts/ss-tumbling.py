@@ -332,7 +332,10 @@ class InertiaMambaEstimator(nn.Module):
             raise ValueError("pool must be {'mean','last'}")
         I = self.head(h)                      # (B,3,3)
         return I, h, z
-    
+    def __str__(self):
+        return "mamba"
+
+
 class InertiaEncoder(nn.Module):
     """
     Input: window of (omega_t, rotation matrix R_t)
@@ -464,10 +467,6 @@ class InertiaTrainer:
         q = q.to(self.device); w = w.to(self.device)
         I, h, z = self.model(w, q)
         return I, h, z
-
-    def __str__(self):
-        return "mamba"
-
 
 
 def project_spd(I, eps=1e-8):
