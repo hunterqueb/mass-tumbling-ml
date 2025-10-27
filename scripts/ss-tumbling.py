@@ -20,12 +20,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchinfo
 
 import matplotlib.pyplot as plt
 
 from qutils.integrators import ode45
 from qutils.ml.mamba import Mamba, MambaConfig 
-
+from qutils.ml import printModelParmSize
 # ======================== math utils ========================
 
 def normalize_quat(q: torch.Tensor) -> torch.Tensor:
@@ -328,11 +329,12 @@ class InertiaMambaEstimator(nn.Module):
         super().__init__()
         self.input_dim = 7
         cfg = MambaConfig(
-            d_model=d_model, n_layers=n_layers,
+            d_model=d_model//expand, n_layers=n_layers,
             d_state=d_state, expand_factor=expand, d_conv=d_conv,
             dt_rank='auto', dt_min=1e-3, dt_max=1e-1, dt_init='random',
             bias=False, conv_bias=True, pscan=True, classifer=False
         )
+        d_model = d_model//expand
         self.backbone = Mamba(cfg)
         self.proj_in = nn.Linear(self.input_dim, d_model)
         self.pool = pool
@@ -413,13 +415,13 @@ class InertiaEncoder(nn.Module):
 # ======================== physics self-supervised loss ========================
 
 class PhysicsLoss(nn.Module):
-    def __init__(self, lam_energy=0.1, lam_dyn=1.0, smooth_sigma=2.5, smooth_k=9):
+    def __init__(self, lam_energy=0.1, lam_dyn=1.0, smooth_sigma=2.5, smooth_k=9,dynamics_mode="tau"):
         super().__init__()
         self.lamE = lam_energy
         self.lamD = lam_dyn
         self.sigma = smooth_sigma
         self.k = 9  # use 9 or 11
-
+        self.dynamics_mode = dynamics_mode
     def forward(self, q, w, I, dt):
         # cast to float64 for all physics; keep model in fp32
         q64 = q.double(); w64 = w.double(); I64 = I.double()
@@ -445,7 +447,7 @@ class PhysicsLoss(nn.Module):
         E = torch.nan_to_num(E, nan=0.0, posinf=0.0, neginf=0.0)
         loss_E = E.var(dim=1, unbiased=False)
 
-        loss_tau, _ = self.dynamics_losses(I64, w_s, wdot, mode="tau_residual")
+        loss_tau, _ = self.dynamics_losses(I64, w_s, wdot)
         loss_D = loss_tau  # rename to keep your total-loss code unchanged
 
         # sanitize per-sequence mean, then mean over batch
@@ -456,13 +458,14 @@ class PhysicsLoss(nn.Module):
         loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D).float()
         return loss, {'L_const': loss_L.float(), 'E_const': loss_E.float(), 'Euler': loss_D.float()}
 
-    def dynamics_losses(self,I64, w_s, wdot, tau=None, mode="wdot_residual"):
+    def dynamics_losses(self,I64, w_s, wdot, tau=None):
         """
-        mode = 'tau_residual' -> || tau - (I wdot + w x (I w)) ||^2
-        mode = 'wdot_residual' -> || wdot - I^{-1}(tau - w x (I w)) ||^2
+        mode = 'tau' -> || tau - (I wdot + w x (I w)) ||^2
+        mode = 'wdot' -> || wdot - I^{-1}(tau - w x (I w)) ||^2
         If tau is None, both reduce to the torque-free form.
         Returns: loss_D (scalar tensor), tau_pred (B,T,3) for diagnostics
         """
+        mode=self.dynamics_mode
         # I w
         Iw = (I64[:, None, :, :] @ w_s[..., None]).squeeze(-1)  # (B,T,3)
         cross = torch.cross(w_s, Iw, dim=-1)                    # (B,T,3)
@@ -473,7 +476,7 @@ class PhysicsLoss(nn.Module):
 
         tau = tau.to(w_s.dtype)
 
-        if mode == "tau_residual":
+        if mode == "tau":
             # predict torque from measured wdot
             tau_pred = (I64[:, None, :, :] @ wdot[..., None]).squeeze(-1) + cross  # (B,T,3)
             resid = tau - tau_pred
@@ -481,7 +484,7 @@ class PhysicsLoss(nn.Module):
             loss_D = (resid**2).sum(dim=-1).mean()  # mean over time and batch
             return loss_D, tau_pred
 
-        elif mode == "wdot_residual":
+        elif mode == "wdot":
             # predict wdot from measured tau
             rhs = tau - cross                                         # (B,T,3)
             A = I64[:, None, :, :].expand(-1, rhs.size(1), -1, -1)    # (B,T,3,3)
@@ -503,11 +506,12 @@ class TrainCfg:
     lam_energy: float = 0.1
     lam_dyn: float = 1.0
     device: str = 'cuda'
+    residual: str = 'tau'  # 'tau' or 'wdot'
 
 class InertiaTrainer:
     def __init__(self, model: InertiaMambaEstimator, cfg: TrainCfg):
         self.model = model.to(cfg.device)
-        self.loss_fn = PhysicsLoss(cfg.lam_energy, cfg.lam_dyn).to(cfg.device)
+        self.loss_fn = PhysicsLoss(cfg.lam_energy, cfg.lam_dyn,dynamics_mode=cfg.residual).to(cfg.device)
         self.opt = torch.optim.AdamW(self.model.parameters(), lr=cfg.lr, weight_decay=cfg.wd)
         self.device = cfg.device
 
@@ -647,6 +651,7 @@ def main():
     ap.add_argument('--layers', type=int, default=2)
     ap.add_argument('--force', action='store_true', help='Force dataset regeneration')
     ap.add_argument('--save',action='store_true', help='Save logs from training')
+    ap.add_argument('--residual', type=str, default='tau', choices=['tau','wdot'])
     args = ap.parse_args()
 
     if args.save:
@@ -814,6 +819,9 @@ def main():
             f'{report["frame_angle_deg"]:.3f} deg  ({report["frame_angle_rad"]:.4f} rad)')
         print("axis match (pred i -> true j):", report["match_indices"])
 
+        # find model size using torchinfo
+        printModelParmSize(model)
+
         # visualize predicted vs true inertia ellipsoids
         # define ellipsoid points
         u = np.linspace(0, 2 * np.pi, 100)
@@ -906,7 +914,7 @@ def main():
     model_transformer = build_estimator(kind="transformer", d_model=args.dmodel, n_layers=args.layers).to(device)
     model_tcn = build_estimator(kind="tcn", d_model=args.dmodel, n_layers=args.layers).to(device)
 
-    tcfg = TrainCfg(lr=args.lr, wd=args.wd, lam_energy=args.lamE, lam_dyn=args.lamD, device=device)
+    tcfg = TrainCfg(lr=args.lr, wd=args.wd, lam_energy=args.lamE, lam_dyn=args.lamD, device=device,residual=args.residual)
     trainer_mamba = InertiaTrainer(model_mamba, tcfg)
     trainer_lstm = InertiaTrainer(model_lstm, tcfg)
     trainer_transformer = InertiaTrainer(model_transformer, tcfg)

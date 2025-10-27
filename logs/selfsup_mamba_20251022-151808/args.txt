@@ -13,3 +13,4 @@ dmodel: 64
 layers: 2
 force: False
 save: True
+residual: wdot_residual
