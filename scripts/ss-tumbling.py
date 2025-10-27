@@ -324,17 +324,16 @@ class InertiaMambaEstimator(nn.Module):
     Backbone: Mamba. Input per timestep: [omega(3), quaternion(4)] => 7 dims.
     Pool tokens -> embedding -> Cholesky head -> I (trace=1).
     """
-    def __init__(self, d_model=192, n_layers=6, d_state=16, expand=2, d_conv=4,
+    def __init__(self, d_model=192, n_layers=6, d_state=32, expand=1, d_conv=4,
                  pool='mean'):
         super().__init__()
         self.input_dim = 7
         cfg = MambaConfig(
-            d_model=d_model//expand, n_layers=n_layers,
+            d_model=d_model, n_layers=n_layers,
             d_state=d_state, expand_factor=expand, d_conv=d_conv,
             dt_rank='auto', dt_min=1e-3, dt_max=1e-1, dt_init='random',
             bias=False, conv_bias=True, pscan=True, classifer=False
         )
-        d_model = d_model//expand
         self.backbone = Mamba(cfg)
         self.proj_in = nn.Linear(self.input_dim, d_model)
         self.pool = pool
