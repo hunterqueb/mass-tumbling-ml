@@ -513,6 +513,12 @@ class InertiaTrainer:
         self.loss_fn = PhysicsLoss(cfg.lam_energy, cfg.lam_dyn,dynamics_mode=cfg.residual).to(cfg.device)
         self.opt = torch.optim.AdamW(self.model.parameters(), lr=cfg.lr, weight_decay=cfg.wd)
         self.device = cfg.device
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        self.opt,
+        mode='min',             # or 'max' for accuracy
+        factor=0.5,             # shrink LR by 50%
+        patience=3             # wait for 3 epochs of no improvement
+    )
 
     def step(self, batch):
         q, w, _, dt = batch
@@ -641,7 +647,7 @@ def main():
     ap.add_argument('--dt', type=float, default=0.01)
     ap.add_argument('--trainN', type=int, default=2000)
     ap.add_argument('--valN', type=int, default=300)
-    ap.add_argument('--lr', type=float, default=2e-4)
+    ap.add_argument('--lr', type=float, default=2e-2)
     ap.add_argument('--wd', type=float, default=1e-4)
     ap.add_argument('--lamE', type=float, default=1.0)
     ap.add_argument('--lamD', type=float, default=0.1)
@@ -740,54 +746,69 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch, shuffle=True, drop_last=True)
     val_loader   = torch.utils.data.DataLoader(val_set,   batch_size=args.batch, shuffle=False)
 
-    def train(model,trainer):
-        # train
-        for ep in range(1, args.epochs+1):
+    def train(model, trainer):
+        ESpatience = 10
+        best_loss = float('inf')
+        counter = 0
+
+        for ep in range(1, args.epochs + 1):
+            # ---------- Train ----------
             model.train()
-            tr_sum=0; n=0
+            tr_sum = 0.0
+            n = 0
             for batch in train_loader:
                 loss, terms = trainer.step(batch)
-                tr_sum += loss*batch[0].size(0); n += batch[0].size(0)
-            tr_loss = tr_sum/n
+                bs = batch[0].size(0)
+                tr_sum += loss * bs
+                n += bs
+            tr_loss = tr_sum / max(n, 1)
 
-            # eval
+            # ---------- Validate ----------
             model.eval()
             with torch.no_grad():
-                vals=[]; Lc=[]; Ec=[]; Dc=[]
-                Ipred=[]; Itrue=[]
-                for q,w,I,dt in val_loader:
-                    q=q.to(device); w=w.to(device); Itrue.append(I)
-                    I_hat,_,_ = trainer.infer(q,w); Ipred.append(I_hat)
+                vals = []
+                Lc, Ec, Dc = [], [], []
+                Ipred_cpu, Itrue_cpu = [], []
+                for q, w, I, dt in val_loader:
+                    q = q.to(device)
+                    w = w.to(device)
+                    Itrue_cpu.append(I.cpu())
+
+                    I_hat, _, _ = trainer.infer(q, w)        # on device
+                    Ipred_cpu.append(I_hat.detach().cpu())    # move to CPU for metrics
+
                     dt_val = as_scalar_dt(dt)
-                    l,t = trainer.loss_fn(q,w,I_hat,dt_val)
-                    vals.append(float(l)); Lc.append(float(t['L_const'])); Ec.append(float(t['E_const'])); Dc.append(float(t['Euler']))
+                    l, t = trainer.loss_fn(q, w, I_hat, dt_val)
+                    vals.append(float(l))
+                    Lc.append(float(t['L_const']))
+                    Ec.append(float(t['E_const']))
+                    Dc.append(float(t['Euler']))
                 vloss = float(np.mean(vals))
-                rerr, ascore = eig_ratio_axis_metrics(torch.cat(Ipred), torch.cat(Itrue))
-            print(f"[{ep:02d}] train={tr_loss:.4e} | val={vloss:.4e} | L={np.mean(Lc):.2e} E={np.mean(Ec):.2e} Dyn={np.mean(Dc):.2e} "
-                f"| eig-ratio-L2={rerr:.3e} axis-align={ascore:.3f}")
 
-        # analyze one sample
-        q,w,Itrue,_ = val_set[0]
-        I_hat,_,_ = trainer.infer(q.unsqueeze(0), w.unsqueeze(0))
+                # Optional: downstream metrics on CPU to avoid device issues
+                rerr, ascore = eig_ratio_axis_metrics(torch.cat(Ipred_cpu), torch.cat(Itrue_cpu))
 
-        I_pred_np = I_hat[0].cpu()
-        I_true_np = Itrue.cpu()
+            # ---------- LR scheduler (ReduceLROnPlateau) ----------
+            trainer.scheduler.step(vloss)
 
-    
-        report = principal_inertia_comparison(I_pred_np, I_true_np)
+            # ---------- Logging ----------
+            cur_lr = trainer.opt.param_groups[0]['lr']
+            print(
+                f"[{ep:02d}] train={tr_loss:.4e} | val={vloss:.4e} | "
+                f"L={np.mean(Lc):.2e} E={np.mean(Ec):.2e} Dyn={np.mean(Dc):.2e} | "
+                f"eig-ratio-L2={rerr:.3e} axis-align={ascore:.3f} | lr={cur_lr:.3e}"
+            )
 
-        print("Pred I (trace=1):\n", np.array_str(np.array(I_pred_np), precision=4, suppress_small=True))
-        print("True I (trace=1):\n", np.array_str(np.array(I_true_np), precision=4, suppress_small=True))
-        print("\n--- Principal inertia comparison ---")
-        print("eigs_pred:", np.array_str(report["evals_pred"], precision=6))
-        print("eigs_true:", np.array_str(report["evals_true"], precision=6))
-        print("abs_err  :", np.array_str(report["abs_err"], precision=6))
-        print("rel_err  :", np.array_str(report["rel_err"], precision=6))
-        print("axis |cos|:", np.array_str(report["axis_cosines"], precision=6), 
-            "  mean=", f'{report["axis_alignment_mean"]:.4f}')
-        print("frame misalignment: "
-            f'{report["frame_angle_deg"]:.3f} deg  ({report["frame_angle_rad"]:.4f} rad)')
-        print("axis match (pred i -> true j):", report["match_indices"])
+            # ---------- Early stopping ----------
+            if vloss < best_loss:
+                best_loss = vloss
+                counter = 0
+                # Optionally save checkpoint here
+            else:
+                counter += 1
+                if counter >= ESpatience:
+                    print("Early stopping triggered.")
+                    break
 
     def validate(model,trainer):
 
