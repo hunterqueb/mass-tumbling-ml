@@ -253,27 +253,38 @@ def add_sensor_noise(qs_t, ws_t, gyro_std=0.002, att_std_deg=0.0, device='cpu'):
     return torch.tensor(qs, device=device), ws_noisy
 
 class TorqueFreeDataset(torch.utils.data.Dataset):
-    def __init__(self, N=2048, T=4.0, dt=0.01, device="cpu",
+    def __init__(self, file=None,N=2048, T=3.0, dt=0.01, device="cpu",
                  w0_mag_range=(0.2, 2.0), noise_std=0.002):
         self.N=N; self.T=T; self.dt=dt; self.device=device
         self.steps = int(T/dt)
-        self.I_true=[]; self.q=[]; self.w=[]
-        for _ in range(N):
-            I = sample_inertia(1, device=device)[0]
-            axis = np.random.randn(3); axis = axis/np.linalg.norm(axis)
-            ang = np.random.rand()*2*math.pi
-            q0 = np.array([math.cos(ang/2), *(math.sin(ang/2)*axis)])
-            mag = np.random.randn(3) * (w0_mag_range[1]-w0_mag_range[0]) + w0_mag_range[0]
-            v = np.random.randn(3); v = v / (np.linalg.norm(v)+1e-9)
-            w0 = mag * v
-            q, w = simulate_torque_free(I, q0, w0, T, dt, device=device, noise_std=noise_std)
-            self.I_true.append(I); self.q.append(q); self.w.append(w)
-            print(f"Generated sample {len(self.I_true)}/{N}", end='\r')
-        self.I_true = torch.tensor(np.array(self.I_true),device=device,dtype=torch.float32)  # (N,3,3)
-        self.q = torch.stack(self.q)             # (N,S,4)
-        self.q = self.q.float()
-        self.w = torch.stack(self.w)             # (N,S,3)
-        self.w = self.w.float()
+        if file is not None:
+            # load from file
+            data = np.load(file)
+            self.device = device
+            self.dt = data['dt']
+            self.I_true = torch.tensor(data['I_true'],device=self.device,dtype=torch.float32)
+            self.q = torch.tensor(data['q'],device=self.device,dtype=torch.float32)
+            self.w = torch.tensor(data['w'],device=self.device,dtype=torch.float32)
+            self.N = self.q.shape[0]
+        else:
+            # generate on the fly
+            self.I_true=[]; self.q=[]; self.w=[]
+            for _ in range(N):
+                I = sample_inertia(1, device=device)[0]
+                axis = np.random.randn(3); axis = axis/np.linalg.norm(axis)
+                ang = np.random.rand()*2*math.pi
+                q0 = np.array([math.cos(ang/2), *(math.sin(ang/2)*axis)])
+                mag = np.random.randn(3) * (w0_mag_range[1]-w0_mag_range[0]) + w0_mag_range[0]
+                v = np.random.randn(3); v = v / (np.linalg.norm(v)+1e-9)
+                w0 = mag * v
+                q, w = simulate_torque_free(I, q0, w0, T, dt, device=device, noise_std=noise_std)
+                self.I_true.append(I); self.q.append(q); self.w.append(w)
+                print(f"Generated sample {len(self.I_true)}/{N}", end='\r')
+            self.I_true = torch.tensor(np.array(self.I_true),device=device,dtype=torch.float32)  # (N,3,3)
+            self.q = torch.stack(self.q)             # (N,S,4)
+            self.q = self.q.float()
+            self.w = torch.stack(self.w)             # (N,S,3)
+            self.w = self.w.float()
 
     def __len__(self): return self.N
     def __getitem__(self, i):
@@ -293,6 +304,16 @@ class TorqueFreeDataset(torch.utils.data.Dataset):
         self.q = self.q.to(device)
         self.w = self.w.to(device)
         self.device = device
+
+    def saveDataset(self, file):
+        np.savez_compressed(
+            file,
+            dt=self.dt,
+            I_true=self.I_true.cpu().numpy(),
+            q=self.q.cpu().numpy(),
+            w=self.w.cpu().numpy()
+        )
+
 # ======================== model ========================
 
 class InertiaHead(nn.Module):
@@ -657,6 +678,8 @@ def main():
     ap.add_argument('--force', action='store_true', help='Force dataset regeneration')
     ap.add_argument('--save',action='store_true', help='Save logs from training')
     ap.add_argument('--residual', type=str, default='tau', choices=['tau','wdot'])
+    ap.add_argument('--data', type=str, default='data/rand/', help='Path to dataset parent directory')
+    ap.add_argument('--datagen', action='store_true', help='Only generate datasets and exit')
     args = ap.parse_args()
 
     if args.save:
@@ -692,34 +715,41 @@ def main():
     from qutils.ml import getDevice
     device = getDevice()
 
-    print("Using device:", device)
     # datasets
-
     # if data/self-sup-data.npz does not exist, generate datasets and save
+
+    dataLoc = args.data + str(args.trainN) + "/self-sup-"
 
     from pathlib import Path
  
-    file_path_train = Path("data/self-sup-train_" + str(args.T) + ".pt")
-    file_path_val = Path("data/self-sup-val_" + str(args.T) + ".pt")
+    file_path_train = Path(dataLoc+"train_" + str(args.T) + ".npz")
+    file_path_val = Path(dataLoc+"val_" + str(args.T) + ".npz")
     if file_path_train.is_file() and file_path_val.is_file() and not args.force:
-        train_set = torch.load("data/self-sup-train_" + str(args.T) + ".pt",weights_only=False,map_location=device)
-        val_set = torch.load("data/self-sup-val_" + str(args.T) + ".pt",weights_only=False,map_location=device)
+        # load datasets
+        train_set = TorqueFreeDataset(file=dataLoc+"train_" + str(args.T) + ".npz",N=args.trainN, T=args.T, dt=args.dt, device=device, noise_std=args.noise)
+        val_set = TorqueFreeDataset(file=dataLoc+"val_" + str(args.T) + ".npz",N=args.trainN, T=args.T, dt=args.dt, device=device, noise_std=args.noise)
+        print("Loaded datasets from", dataLoc)
 
-    else:    
+    else:
+        # create dataset directory if it doesn't exist
+        Path(args.data + str(args.trainN)).mkdir(parents=True, exist_ok=True)
+        # generate and save datasets 
         print("Generating datasets ...")
         print(" Training set:")
         train_set = TorqueFreeDataset(N=args.trainN, T=args.T, dt=args.dt, device=device, noise_std=args.noise)
+        train_set.saveDataset(dataLoc+"train_" + str(args.T) + ".npz")
         print()
         print(" Validation set:")
         val_set   = TorqueFreeDataset(N=args.valN,   T=args.T, dt=args.dt, device=device, noise_std=args.noise)
-        torch.save(train_set,"data/self-sup-train_" + str(args.T) + ".pt")
-        torch.save(val_set,"data/self-sup-val_" + str(args.T) + ".pt")
+        val_set.saveDataset(dataLoc+"val_" + str(args.T) + ".npz")
         print()
-
+        if args.datagen:
+            print("Datasets generated and saved. Exiting...")
+            return
     # plot a random sample from a set
     sample_idx = np.random.randint(0, len(val_set))
     q_sample, w_sample, I_sample, dt_sample = val_set[sample_idx]
-    time_array = np.arange(0, args.T, args.dt)[:q_sample.shape[0]]
+    time_array = np.arange(0, args.T, dt_sample)[:q_sample.shape[0]]
     plt.figure(figsize=(12, 5))
     plt.subplot(1, 2, 1)
     plt.plot(time_array, w_sample.cpu().numpy())
@@ -885,7 +915,7 @@ def main():
         E_true = 0.5 * (w_torch * Iw_true).sum(-1)
         L_pred = (quat_to_R(q_torch) @ Iw_pred.unsqueeze(-1)).squeeze(-1)
         L_true = (quat_to_R(q_torch) @ Iw_true.unsqueeze(-1)).squeeze(-1)
-        time_array = np.arange(0, args.T, args.dt)[:q.shape[0]]
+        time_array = np.arange(0, args.T, dt_val)[:q.shape[0]]
         plt.figure(figsize=(12, 5))
         plt.subplot(1, 2, 1)
         plt.plot(time_array, E_pred.cpu().numpy(), label='Predicted Energy')
@@ -940,9 +970,9 @@ def main():
     trainer_transformer = InertiaTrainer(model_transformer, tcfg)
     trainer_tcn = InertiaTrainer(model_tcn, tcfg)
 
-    print("training lstm")
-    train(model_lstm,trainer_lstm)
-    validate(model_lstm,trainer_lstm)
+    # print("training lstm")
+    # train(model_lstm,trainer_lstm)
+    # validate(model_lstm,trainer_lstm)
     print("training mamba")
     train(model_mamba,trainer_mamba)
     validate(model_mamba,trainer_mamba)
