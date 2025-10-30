@@ -1,15 +1,4 @@
 #!/usr/bin/env python3
-# inertia_mamba_selfsup.py
-# Self-supervised identification of inertia (scale-free) using a Mamba backbone.
-# Input per timestep: [omega(3), quaternion(4)]  (scalar-first quaternion)
-# Output: SPD inertia matrix I with trace=1 (principal moment ratios + axes).
-#
-# Usage (synthetic demo):
-#   python inertia_mamba_selfsup.py --epochs 30 --device cuda
-#
-# You need your Mamba implementation importable as:
-#   from mamba_impl import Mamba, MambaConfig
-# If it's in a package, adjust the import below or put this file next to it.
 
 import math
 import argparse
@@ -136,6 +125,38 @@ def eig_ratio_axis_metrics(I_pred, I_true, min_eig=1e-6):
     axis_score = float(np.mean(scores))
     return ratio_err, axis_score
 
+import torch
+import torch.nn.functional as F
+
+def central_diff_1d(x, dt):
+    # x: (B,T)
+    dx = torch.empty_like(x)
+    dx[:,1:-1] = (x[:,2:] - x[:,:-2]) / (2*dt)
+    dx[:, :1]  = (x[:,1:2] - x[:, :1]) / dt
+    dx[:, -1:] = (x[:, -1:] - x[:, -2:-1]) / dt
+    return dx
+
+def sliding_var(x, win):
+    # x: (B,T)
+    B,T = x.shape
+    if win >= T:
+        m = x.mean(dim=1, keepdim=True)
+        return ((x - m)**2).mean(dim=1)  # (B,)
+    # conv-based windowed mean/var
+    w = torch.ones(1,1,win, device=x.device, dtype=x.dtype) / win
+    y = x.unsqueeze(1)                         # (B,1,T)
+    mu = F.conv1d(y, w, padding=win//2)[:,0]   # (B,T)
+    v  = F.conv1d((y - mu.unsqueeze(1))**2, w, padding=win//2)[:,0]  # (B,T)
+    # return per-trajectory average of windowed variance
+    return v.mean(dim=1)                        # (B,)
+
+def non_dc_power(x):
+    # x: (B,T) -> average power at non-DC frequencies via rFFT
+    X = torch.fft.rfft(x - x.mean(dim=1, keepdim=True), dim=1)
+    # drop DC (index 0). Normalize by T for scale invariance
+    P = (X[:,1:].abs()**2)
+    T = x.shape[1]
+    return (P.sum(dim=1) / T)                  # (B,)
 
 # ======================== synthetic torque-free sim ========================
 
@@ -462,10 +483,15 @@ class PhysicsLoss(nn.Module):
         Lmean  = Linert.mean(dim=1, keepdim=True)
         loss_L = ((Linert - Lmean)**2).sum(dim=-1)
 
-        E      = (w_s * Iw).sum(dim=-1) * 0.5
-        # variance that ignores NaNs/Infs
-        E = torch.nan_to_num(E, nan=0.0, posinf=0.0, neginf=0.0)
-        loss_E = E.var(dim=1, unbiased=False)
+        # E      = (w_s * Iw).sum(dim=-1) * 0.5
+        # # variance that ignores NaNs/Infs
+        # E = torch.nan_to_num(E, nan=0.0, posinf=0.0, neginf=0.0)
+        # loss_E = E.var(dim=1, unbiased=False)
+        loss_E, E_terms = self.energy_losses(w_s.double(), I64, dt,
+                                        lam_deriv=1.0, lam_win=1.0, lam_spec=0.2,
+                                        win= max(11, (w_s.shape[1]//20)|1),  # ~5% of window, odd
+                                        topk_frac=0.5)
+
 
         loss_tau, _ = self.dynamics_losses(I64, w_s, wdot)
         loss_D = loss_tau  # rename to keep your total-loss code unchanged
@@ -516,6 +542,43 @@ class PhysicsLoss(nn.Module):
 
         else:
             raise ValueError("mode must be 'tau_residual' or 'wdot_residual'")
+    
+    def energy_losses(self,w, I, dt, lam_deriv=1.0, lam_win=1.0, lam_spec=0.2, win=51, topk_frac=0.5):
+        """
+        w: (B,T,3), I: (B,3,3)
+        Returns: scalar loss_E and dict
+        """
+        # E(t) per batch
+        Iw = (I[:,None,:,:] @ w[...,None]).squeeze(-1)   # (B,T,3)
+        E  = 0.5 * (w * Iw).sum(dim=-1)                  # (B,T)
+
+        # 1) derivative penalty  ||dE/dt||^2
+        dEdt = central_diff_1d(E, dt)
+        L_deriv = (dEdt**2).mean(dim=1)                  # (B,)
+
+        # 2) windowed variance (captures oscillations even if mean is right)
+        L_win = sliding_var(E, win=win)                  # (B,)
+
+        # 3) spectral power off-DC (kills periodic energy ripple)
+        L_spec = non_dc_power(E)                         # (B,)
+
+        # robust aggregation: take top-k worst sequences (avoids cancellation)
+        B = E.shape[0]
+        k = max(1, int(topk_frac * B))
+        def topk_mean(v):
+            vals, _ = torch.topk(v, k=k, largest=True, sorted=False)
+            return vals.mean()
+
+        loss = (lam_deriv * topk_mean(L_deriv) +
+                lam_win   * topk_mean(L_win)   +
+                lam_spec  * topk_mean(L_spec))
+
+        terms = {
+            'E_deriv':  topk_mean(L_deriv).detach(),
+            'E_winvar': topk_mean(L_win).detach(),
+            'E_spec':   topk_mean(L_spec).detach()
+        }
+        return loss, terms
 
 # ======================== trainer ========================
 
@@ -777,9 +840,22 @@ def main():
     val_loader   = torch.utils.data.DataLoader(val_set,   batch_size=args.batch, shuffle=False)
 
     def train(model, trainer):
-        ESpatience = 10
+        # ---- knobs ----
+        MIN_EPOCHS = 20
+        MIN_STEPS  = 10_000
+        ES_PATIENCE_EVALS = 8          # consecutive evals after LR≈floor
+        LR_FLOOR = 1e-6                # must match scheduler's min_lr
+        PLATEAU_THR = 5e-3             # <0.5% relative improvement
+
         best_loss = float('inf')
-        counter = 0
+        best_epoch = -1
+        es_counter = 0
+        diverge_counter = 0
+        global_steps = 0
+
+        prev = {}  # previous validation metrics to compute deltas
+
+        steps_per_epoch = max(1, len(train_loader))
 
         for ep in range(1, args.epochs + 1):
             # ---------- Train ----------
@@ -787,10 +863,11 @@ def main():
             tr_sum = 0.0
             n = 0
             for batch in train_loader:
-                loss, terms = trainer.step(batch)
+                loss, _ = trainer.step(batch)
                 bs = batch[0].size(0)
                 tr_sum += loss * bs
                 n += bs
+                global_steps += 1
             tr_loss = tr_sum / max(n, 1)
 
             # ---------- Validate ----------
@@ -800,45 +877,74 @@ def main():
                 Lc, Ec, Dc = [], [], []
                 Ipred_cpu, Itrue_cpu = [], []
                 for q, w, I, dt in val_loader:
-                    q = q.to(device)
-                    w = w.to(device)
+                    q = q.to(device); w = w.to(device)
                     Itrue_cpu.append(I.cpu())
 
-                    I_hat, _, _ = trainer.infer(q, w)        # on device
-                    Ipred_cpu.append(I_hat.detach().cpu())    # move to CPU for metrics
+                    I_hat, _, _ = trainer.infer(q, w)
+                    Ipred_cpu.append(I_hat.detach().cpu())
 
                     dt_val = as_scalar_dt(dt)
                     l, t = trainer.loss_fn(q, w, I_hat, dt_val)
                     vals.append(float(l))
-                    Lc.append(float(t['L_const']))
-                    Ec.append(float(t['E_const']))
-                    Dc.append(float(t['Euler']))
+                    if 'L_const' in t:   Lc.append(float(t['L_const']))
+                    if 'E_const' in t:   Ec.append(float(t['E_const']))
+                    if 'Euler'   in t:   Dc.append(float(t['Euler']))
+                    # if 'E_deriv' in t:   Ec.append(float(t['E_deriv']))
+                    # if 'E_winvar'in t:   Ec.append(float(t['E_winvar']))
+                    # if 'E_spec'  in t:   Ec.append(float(t['E_spec']))
                 vloss = float(np.mean(vals))
-
-                # Optional: downstream metrics on CPU to avoid device issues
                 rerr, ascore = eig_ratio_axis_metrics(torch.cat(Ipred_cpu), torch.cat(Itrue_cpu))
 
-            # ---------- LR scheduler (ReduceLROnPlateau) ----------
+            # ---------- Scheduler (ReduceLROnPlateau) ----------
             trainer.scheduler.step(vloss)
+            cur_lr = float(trainer.opt.param_groups[0]['lr'])
+
+            # ---------- Deltas for plateau detection ----------
+            def rel_improve(prev_val, curr_val):
+                if prev_val is None or not np.isfinite(prev_val): return np.inf
+                return (prev_val - curr_val) / max(prev_val, 1e-12)
+
+            d_total = rel_improve(prev.get('vloss'), vloss)
+            prev['vloss'] = vloss
 
             # ---------- Logging ----------
-            cur_lr = trainer.opt.param_groups[0]['lr']
+            mL = np.mean(Lc) if Lc else float('nan')
+            mE = np.mean(Ec) if Ec else float('nan')
+            mD = np.mean(Dc) if Dc else float('nan')
             print(
-                f"[{ep:02d}] train={tr_loss:.4e} | val={vloss:.4e} | "
-                f"L={np.mean(Lc):.2e} E={np.mean(Ec):.2e} Dyn={np.mean(Dc):.2e} | "
-                f"eig-ratio-L2={rerr:.3e} axis-align={ascore:.3f} | lr={cur_lr:.3e}"
+                f"[{ep:03d}] steps={global_steps} "
+                f"train={tr_loss:.4e} | val={vloss:.4e} (Δ={d_total:.2e}) | "
+                f"L={mL:.2e} E={mE:.2e} Dyn={mD:.2e} | "
+                f"eigL2={rerr:.3e} axis={ascore:.3f} | lr={cur_lr:.2e}"
             )
 
-            # ---------- Early stopping ----------
-            if vloss < best_loss:
+            # ---------- Track best / divergence guards ----------
+            if np.isfinite(vloss) and vloss < best_loss - 1e-6:
                 best_loss = vloss
-                counter = 0
-                # Optionally save checkpoint here
+                best_epoch = ep
+                es_counter = 0
+                diverge_counter = 0
             else:
-                counter += 1
-                if counter >= ESpatience:
-                    print("Early stopping triggered.")
-                    break
+                if not np.isfinite(vloss) or vloss > 1.5 * best_loss:
+                    diverge_counter += 1
+                    if diverge_counter >= 3:
+                        print(f"Divergence: stopping (val={vloss:.3e}, best={best_loss:.3e}).")
+                        break
+
+            # ---------- Early stopping ----------
+            # Allow stopping only after a minimum budget and LR near the floor.
+            lr_near_floor = cur_lr <= 2.0 * LR_FLOOR
+            plateau = d_total < PLATEAU_THR  # <0.5% improvement vs previous eval
+
+            if ep >= MIN_EPOCHS and global_steps >= MIN_STEPS and lr_near_floor and plateau:
+                es_counter += 1
+            else:
+                es_counter = 0
+
+            if es_counter >= ES_PATIENCE_EVALS:
+                print(f"Early stop at epoch {ep} "
+                    f"(best @ {best_epoch}, best_val={best_loss:.3e}).")
+                break
 
     def validate(model,trainer):
 
