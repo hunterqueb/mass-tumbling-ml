@@ -235,7 +235,7 @@ if __name__ == "__main__":
         q0 /= np.linalg.norm(q0)
         q0_list.append(q0)
         # Random angular velocity
-        w0 = np.random.uniform(-5.0, 5.0, size=3)
+        w0 = np.random.uniform(0.2, 5.0, size=3)
         w0_list.append(w0)
         m_list.append(m)
 

@@ -663,7 +663,7 @@ def principal_inertia_comparison(I_pred, I_true):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--epochs', type=int, default=100)
-    ap.add_argument('--batch', type=int, default=16)
+    ap.add_argument('--batch', type=int, default=8)
     ap.add_argument('--T', type=float, default=3.0)
     ap.add_argument('--dt', type=float, default=0.01)
     ap.add_argument('--trainN', type=int, default=2000)
@@ -970,9 +970,9 @@ def main():
     trainer_transformer = InertiaTrainer(model_transformer, tcfg)
     trainer_tcn = InertiaTrainer(model_tcn, tcfg)
 
-    # print("training lstm")
-    # train(model_lstm,trainer_lstm)
-    # validate(model_lstm,trainer_lstm)
+    print("training lstm")
+    train(model_lstm,trainer_lstm)
+    validate(model_lstm,trainer_lstm)
     print("training mamba")
     train(model_mamba,trainer_mamba)
     validate(model_mamba,trainer_mamba)
