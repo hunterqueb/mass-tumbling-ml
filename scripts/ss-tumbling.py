@@ -497,8 +497,7 @@ class PhysicsLoss(nn.Module):
         loss_D = loss_tau  # rename to keep your total-loss code unchanged
 
         loss_axis = self.axis_constancy_loss(q64, w_s, I64)
-        print(f"Axis const loss: {loss_axis.item():.6f}")
-        
+
         # sanitize per-sequence mean, then mean over batch
         loss_L = torch.nan_to_num(loss_L.mean(dim=1), nan=0.0).mean()
         loss_E = torch.nan_to_num(loss_E,             nan=0.0).mean()
@@ -506,7 +505,7 @@ class PhysicsLoss(nn.Module):
         loss_axis = torch.nan_to_num(loss_axis,       nan=0.0).mean()
 
         loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D + 0.5*loss_axis).float()
-        return loss, {'L_const': loss_L.float(), 'E_const': loss_E.float(), 'Euler': loss_D.float()}
+        return loss, {'L_const': loss_L.float(), 'E_const': loss_E.float(), 'Euler': loss_D.float(), 'Axis_const': loss_axis.float()}
 
     def dynamics_losses(self,I64, w_s, wdot, tau=None):
         """
@@ -586,23 +585,39 @@ class PhysicsLoss(nn.Module):
         }
         return loss, terms
     
-    def axis_constancy_loss(self,q, w, I):
-        # H_inertial(t) should be *constant direction* and magnitude in torque-free motion
-        R = quat_to_R(q.double())                 # (B,T,3,3), body->inertial
-        Iw = (I.double()[:,None,:,:] @ w.double()[...,None]).squeeze(-1)   # (B,T,3)
-        H_I = (R @ Iw[...,None]).squeeze(-1)      # (B,T,3)
+    def axis_constancy_loss(self,q, w, I, lam_dir=1.0, lam_mag=0.5, eps=1e-12):
+        """
+        q: (B,T,4) scalar-first, unit
+        w: (B,T,3)
+        I: (B,3,3) SPD
+        returns: scalar loss
+        """
+        q = q.double(); w = w.double(); I = I.double()
 
-        # direction constancy: 1 - cos(angle to mean)
-        Hm = H_I.mean(dim=1, keepdim=True)        # (B,1,3)
-        Hm_norm = torch.linalg.norm(Hm, dim=-1, keepdim=True) + 1e-12
-        dir_cos = (H_I * Hm).sum(-1) / (torch.linalg.norm(H_I, dim=-1, keepdim=True)*Hm_norm)
-        L_dir = (1.0 - dir_cos).mean()            # want cos ≈ 1
+        # Body->inertial rotation matrices, force (B,T,3,3)
+        R = quat_to_R(q)                     # ensure your quat_to_R returns (B,T,3,3)
+        if R.dim() == 3:                     # if it returns (T,3,3) for single batch, fix it
+            R = R.unsqueeze(0).expand(q.size(0), -1, -1, -1)
 
-        # magnitude constancy
-        L_mag = H_I.norm(dim=-1).var(dim=1, unbiased=False).mean()
+        # I ω in body frame -> (B,T,3)
+        Iw = torch.einsum('bij,btj->bti', I, w)       # (B,3,3) x (B,T,3)
 
-        return L_dir + 0.5*L_mag
-# ======================== trainer ========================
+        # Angular momentum in inertial frame H_I(t) = R(t) * (I ω)(t)
+        H_I = torch.einsum('btij,btj->bti', R, Iw)    # (B,T,3)
+
+        # Direction constancy: 1 - cos(angle with batch mean direction)
+        Hm = H_I.mean(dim=1, keepdim=True)            # (B,1,3)
+        Hm_norm = torch.linalg.norm(Hm, dim=-1, keepdim=True).clamp_min(eps)  # (B,1,1)
+        HI_norm = torch.linalg.norm(H_I, dim=-1, keepdim=True).clamp_min(eps) # (B,T,1)
+        dir_cos = (H_I * Hm).sum(dim=-1, keepdim=True) / (HI_norm * Hm_norm)  # (B,T,1)
+        L_dir = (1.0 - dir_cos).mean()                # scalar
+
+        # Magnitude constancy: variance over time of ||H_I||
+        Hmag = HI_norm.squeeze(-1)                    # (B,T)
+        L_mag = Hmag.var(dim=1, unbiased=False).mean()
+
+        loss = lam_dir * L_dir + lam_mag * L_mag
+        return loss# ======================== trainer ========================
 
 @dataclass
 class TrainCfg:
@@ -896,7 +911,7 @@ def main():
             model.eval()
             with torch.no_grad():
                 vals = []
-                Lc, Ec, Dc = [], [], []
+                Lc, Ec, Dc,Ac = [], [], [],[]
                 Ipred_cpu, Itrue_cpu = [], []
                 for q, w, I, dt in val_loader:
                     q = q.to(device); w = w.to(device)
@@ -911,6 +926,7 @@ def main():
                     if 'L_const' in t:   Lc.append(float(t['L_const']))
                     if 'E_const' in t:   Ec.append(float(t['E_const']))
                     if 'Euler'   in t:   Dc.append(float(t['Euler']))
+                    if 'Axis_const'   in t:   Ac.append(float(t['Axis_const']))
                     # if 'E_deriv' in t:   Ec.append(float(t['E_deriv']))
                     # if 'E_winvar'in t:   Ec.append(float(t['E_winvar']))
                     # if 'E_spec'  in t:   Ec.append(float(t['E_spec']))
@@ -933,11 +949,12 @@ def main():
             mL = np.mean(Lc) if Lc else float('nan')
             mE = np.mean(Ec) if Ec else float('nan')
             mD = np.mean(Dc) if Dc else float('nan')
+            mA = np.mean(Ac) if Ac else float('nan')
             print(
                 f"[{ep:03d}] steps={global_steps} "
                 f"train={tr_loss:.4e} | val={vloss:.4e} (Δ={d_total:.2e}) | "
-                f"L={mL:.2e} E={mE:.2e} Dyn={mD:.2e} | "
-                f"eigL2={rerr:.3e} axis={ascore:.3f} | lr={cur_lr:.2e}"
+                f"L={mL:.2e} E={mE:.2e} Dyn={mD:.2e} Axis={mA:.2e} | "
+                f"eigL2={rerr:.3e} axis={ascore:.3f} | lr={cur_lr:.2e} "
             )
 
             # ---------- Track best / divergence guards ----------
