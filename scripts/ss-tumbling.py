@@ -960,17 +960,6 @@ def main():
 
         I_pred_np = I_hat[0].cpu()
         I_true_np = Itrue.cpu()
-        lp, Up = np.linalg.eigh(I_pred_np)
-        lt, Ut = np.linalg.eigh(I_true_np)
-        w = w.cpu().numpy()
-        # energies via principal frames
-        wp = (Up.T @ w.T).T   # project ω onto pred principal axes
-        wt = (Ut.T @ w.T).T   # project ω onto true principal axes
-        E_p = 0.5*np.sum((wp**2) * lp[None,:], axis=1)
-        E_t = 0.5*np.sum((wt**2) * lt[None,:], axis=1)
-
-        print("mean(E_pred)/mean(E_true) =", E_p.mean()/E_t.mean())
-        print("|U_p^T U_t| (axis cosines):\n", np.abs(Up.T @ Ut))
 
     
         report = principal_inertia_comparison(I_pred_np, I_true_np)
@@ -1074,6 +1063,19 @@ def main():
         plt.tight_layout()
         if args.save:
             plt.savefig(log_dir+"/conservation_errors_"+modelStr+".png")
+
+
+        lp, Up = np.linalg.eigh(I_pred_np)
+        lt, Ut = np.linalg.eigh(I_true_np)
+        w = w.cpu().numpy()
+        # energies via principal frames
+        wp = (Up.T @ w.T).T   # project ω onto pred principal axes
+        wt = (Ut.T @ w.T).T   # project ω onto true principal axes
+        E_p = 0.5*np.sum((wp**2) * lp[None,:], axis=1)
+        E_t = 0.5*np.sum((wt**2) * lt[None,:], axis=1)
+
+        print("mean(E_pred)/mean(E_true) =", E_p.mean()/E_t.mean())
+        print("|U_p^T U_t| (axis cosines):\n", np.abs(Up.T @ Ut))
 
     # model + trainer
 
