@@ -496,12 +496,16 @@ class PhysicsLoss(nn.Module):
         loss_tau, _ = self.dynamics_losses(I64, w_s, wdot)
         loss_D = loss_tau  # rename to keep your total-loss code unchanged
 
+        loss_axis = self.axis_constancy_loss(q64, w_s, I64)
+        print(f"Axis const loss: {loss_axis.item():.6f}")
+        
         # sanitize per-sequence mean, then mean over batch
         loss_L = torch.nan_to_num(loss_L.mean(dim=1), nan=0.0).mean()
         loss_E = torch.nan_to_num(loss_E,             nan=0.0).mean()
         loss_D = torch.nan_to_num(loss_D,             nan=0.0).mean()
+        loss_axis = torch.nan_to_num(loss_axis,       nan=0.0).mean()
 
-        loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D).float()
+        loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D + 0.5*loss_axis).float()
         return loss, {'L_const': loss_L.float(), 'E_const': loss_E.float(), 'Euler': loss_D.float()}
 
     def dynamics_losses(self,I64, w_s, wdot, tau=None):
@@ -581,7 +585,23 @@ class PhysicsLoss(nn.Module):
             'E_spec':   topk_mean(L_spec).detach()
         }
         return loss, terms
+    
+    def axis_constancy_loss(self,q, w, I):
+        # H_inertial(t) should be *constant direction* and magnitude in torque-free motion
+        R = quat_to_R(q.double())                 # (B,T,3,3), body->inertial
+        Iw = (I.double()[:,None,:,:] @ w.double()[...,None]).squeeze(-1)   # (B,T,3)
+        H_I = (R @ Iw[...,None]).squeeze(-1)      # (B,T,3)
 
+        # direction constancy: 1 - cos(angle to mean)
+        Hm = H_I.mean(dim=1, keepdim=True)        # (B,1,3)
+        Hm_norm = torch.linalg.norm(Hm, dim=-1, keepdim=True) + 1e-12
+        dir_cos = (H_I * Hm).sum(-1) / (torch.linalg.norm(H_I, dim=-1, keepdim=True)*Hm_norm)
+        L_dir = (1.0 - dir_cos).mean()            # want cos ≈ 1
+
+        # magnitude constancy
+        L_mag = H_I.norm(dim=-1).var(dim=1, unbiased=False).mean()
+
+        return L_dir + 0.5*L_mag
 # ======================== trainer ========================
 
 @dataclass
