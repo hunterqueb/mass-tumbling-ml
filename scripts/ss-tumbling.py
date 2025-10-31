@@ -549,7 +549,9 @@ class PhysicsLoss(nn.Module):
         Returns: scalar loss_E and dict
         """
         # E(t) per batch
-        Iw = (I[:,None,:,:] @ w[...,None]).squeeze(-1)   # (B,T,3)
+        w_s = gaussian_smooth_1d(w, sigma=self.sigma, k=self.k)
+
+        Iw = (I[:,None,:,:] @ w_s[...,None]).squeeze(-1)   # (B,T,3)
         E  = 0.5 * (w * Iw).sum(dim=-1)                  # (B,T)
 
         # 1) derivative penalty  ||dE/dt||^2
@@ -958,6 +960,17 @@ def main():
 
         I_pred_np = I_hat[0].cpu()
         I_true_np = Itrue.cpu()
+        lp, Up = np.linalg.eigh(I_pred_np)
+        lt, Ut = np.linalg.eigh(I_true_np)
+        w = w.cpu().numpy()
+        # energies via principal frames
+        wp = (Up.T @ w.T).T   # project ω onto pred principal axes
+        wt = (Ut.T @ w.T).T   # project ω onto true principal axes
+        E_p = 0.5*np.sum((wp**2) * lp[None,:], axis=1)
+        E_t = 0.5*np.sum((wt**2) * lt[None,:], axis=1)
+
+        print("mean(E_pred)/mean(E_true) =", E_p.mean()/E_t.mean())
+        print("|U_p^T U_t| (axis cosines):\n", np.abs(Up.T @ Ut))
 
     
         report = principal_inertia_comparison(I_pred_np, I_true_np)
@@ -1076,18 +1089,18 @@ def main():
     trainer_transformer = InertiaTrainer(model_transformer, tcfg)
     trainer_tcn = InertiaTrainer(model_tcn, tcfg)
 
-    print("training lstm")
-    train(model_lstm,trainer_lstm)
-    validate(model_lstm,trainer_lstm)
+    # print("training lstm")
+    # train(model_lstm,trainer_lstm)
+    # validate(model_lstm,trainer_lstm)
     print("training mamba")
     train(model_mamba,trainer_mamba)
     validate(model_mamba,trainer_mamba)
-    print("training transformer")
-    train(model_transformer,trainer_transformer)
-    validate(model_transformer,trainer_transformer)
-    print("training tcn")
-    train(model_tcn,trainer_tcn)
-    validate(model_tcn,trainer_tcn)
+    # print("training transformer")
+    # train(model_transformer,trainer_transformer)
+    # validate(model_transformer,trainer_transformer)
+    # print("training tcn")
+    # train(model_tcn,trainer_tcn)
+    # validate(model_tcn,trainer_tcn)
 
 
     if not args.save:
