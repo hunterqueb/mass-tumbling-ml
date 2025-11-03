@@ -488,7 +488,7 @@ class PhysicsLoss(nn.Module):
         # E = torch.nan_to_num(E, nan=0.0, posinf=0.0, neginf=0.0)
         # loss_E = E.var(dim=1, unbiased=False)
         loss_E, E_terms = self.energy_losses(w_s.double(), I64, dt,
-                                        lam_deriv=1.0, lam_win=1.0, lam_spec=0.2,
+                                        lam_E=1.0, lam_win=0.5, lam_spec=0.2, lam_dEdt=0.5,
                                         win= max(11, (w_s.shape[1]//20)|1),  # ~5% of window, odd
                                         topk_frac=0.5)
 
@@ -504,7 +504,7 @@ class PhysicsLoss(nn.Module):
         loss_D = torch.nan_to_num(loss_D,             nan=0.0).mean()
         loss_axis = torch.nan_to_num(loss_axis,       nan=0.0).mean()
 
-        loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D + 0.5*loss_axis).float()
+        loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D + 0.1*loss_axis).float()
         return loss, {'L_const': loss_L.float(), 'E_const': loss_E.float(), 'Euler': loss_D.float(), 'Axis_const': loss_axis.float()}
 
     def dynamics_losses(self,I64, w_s, wdot, tau=None):
@@ -546,20 +546,25 @@ class PhysicsLoss(nn.Module):
         else:
             raise ValueError("mode must be 'tau_residual' or 'wdot_residual'")
     
-    def energy_losses(self,w, I, dt, lam_deriv=1.0, lam_win=1.0, lam_spec=0.2, win=51, topk_frac=0.5):
+    def energy_losses(self,w, I, dt, lam_E=1.0, lam_win=1.0, lam_spec=0.2, lam_dEdt=0.5, win=51, topk_frac=0.5):
         """
         w: (B,T,3), I: (B,3,3)
         Returns: scalar loss_E and dict
         """
+
         # E(t) per batch
         w_s = gaussian_smooth_1d(w, sigma=self.sigma, k=self.k)
 
         Iw = (I[:,None,:,:] @ w_s[...,None]).squeeze(-1)   # (B,T,3)
-        E  = 0.5 * (w * Iw).sum(dim=-1)                  # (B,T)
+        E  = 0.5 * (w_s * Iw).sum(dim=-1)                  # (B,T)
 
-        # 1) derivative penalty  ||dE/dt||^2
+        # variance that ignores NaNs/Infs
+        E = torch.nan_to_num(E, nan=0.0, posinf=0.0, neginf=0.0)
+        L_E = E.var(dim=1, unbiased=False)
+
+        # 1) derivative penalty (unused) - use energy itself 
         dEdt = central_diff_1d(E, dt)
-        L_deriv = (dEdt**2).mean(dim=1)                  # (B,)
+        L_dEdt = (dEdt**2).mean(dim=1)                     # (B,)
 
         # 2) windowed variance (captures oscillations even if mean is right)
         L_win = sliding_var(E, win=win)                  # (B,)
@@ -574,14 +579,16 @@ class PhysicsLoss(nn.Module):
             vals, _ = torch.topk(v, k=k, largest=True, sorted=False)
             return vals.mean()
 
-        loss = (lam_deriv * topk_mean(L_deriv) +
+        loss = (lam_E * topk_mean(L_E) +
                 lam_win   * topk_mean(L_win)   +
-                lam_spec  * topk_mean(L_spec))
+                lam_spec  * topk_mean(L_spec)  +
+                lam_dEdt  * topk_mean(L_dEdt)) 
 
         terms = {
-            'E_deriv':  topk_mean(L_deriv).detach(),
+            'E':  topk_mean(L_E).detach(),
             'E_winvar': topk_mean(L_win).detach(),
-            'E_spec':   topk_mean(L_spec).detach()
+            'E_spec':   topk_mean(L_spec).detach(),
+            'E_dEdt':   topk_mean(L_dEdt).detach()
         }
         return loss, terms
     
@@ -768,7 +775,7 @@ def main():
     ap.add_argument('--dt', type=float, default=0.01)
     ap.add_argument('--trainN', type=int, default=2000)
     ap.add_argument('--valN', type=int, default=300)
-    ap.add_argument('--lr', type=float, default=2e-2)
+    ap.add_argument('--lr', type=float, default=2e-4)
     ap.add_argument('--wd', type=float, default=1e-4)
     ap.add_argument('--lamE', type=float, default=1.0)
     ap.add_argument('--lamD', type=float, default=0.1)
