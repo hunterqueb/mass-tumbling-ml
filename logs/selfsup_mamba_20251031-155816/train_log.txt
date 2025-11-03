@@ -1,0 +1,4 @@
+Logging to logs/selfsup_mamba_20251031-155816
+GPU is available
+Loaded datasets from data/rand/2000/self-sup-
+training mamba
