@@ -488,7 +488,7 @@ class PhysicsLoss(nn.Module):
         # E = torch.nan_to_num(E, nan=0.0, posinf=0.0, neginf=0.0)
         # loss_E = E.var(dim=1, unbiased=False)
         loss_E, E_terms = self.energy_losses(w_s.double(), I64, dt,
-                                        lam_E=1.0, lam_win=0.5, lam_spec=0.2, lam_dEdt=0.5,
+                                        lam_deriv=1.0, lam_win=1.0, lam_spec=0.2,
                                         win= max(11, (w_s.shape[1]//20)|1),  # ~5% of window, odd
                                         topk_frac=0.5)
 
@@ -496,16 +496,13 @@ class PhysicsLoss(nn.Module):
         loss_tau, _ = self.dynamics_losses(I64, w_s, wdot)
         loss_D = loss_tau  # rename to keep your total-loss code unchanged
 
-        loss_axis = self.axis_constancy_loss(q64, w_s, I64)
-
         # sanitize per-sequence mean, then mean over batch
         loss_L = torch.nan_to_num(loss_L.mean(dim=1), nan=0.0).mean()
         loss_E = torch.nan_to_num(loss_E,             nan=0.0).mean()
         loss_D = torch.nan_to_num(loss_D,             nan=0.0).mean()
-        loss_axis = torch.nan_to_num(loss_axis,       nan=0.0).mean()
 
-        loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D + 0.1*loss_axis).float()
-        return loss, {'L_const': loss_L.float(), 'E_const': loss_E.float(), 'Euler': loss_D.float(), 'Axis_const': loss_axis.float()}
+        loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D).float()
+        return loss, {'L_const': loss_L.float(), 'E_const': loss_E.float(), 'Euler': loss_D.float()}
 
     def dynamics_losses(self,I64, w_s, wdot, tau=None):
         """
@@ -546,25 +543,20 @@ class PhysicsLoss(nn.Module):
         else:
             raise ValueError("mode must be 'tau_residual' or 'wdot_residual'")
     
-    def energy_losses(self,w, I, dt, lam_E=1.0, lam_win=1.0, lam_spec=0.2, lam_dEdt=0.5, win=51, topk_frac=0.5):
+    def energy_losses(self,w, I, dt, lam_deriv=1.0, lam_win=1.0, lam_spec=0.2, win=51, topk_frac=0.5):
         """
         w: (B,T,3), I: (B,3,3)
         Returns: scalar loss_E and dict
         """
-
         # E(t) per batch
         w_s = gaussian_smooth_1d(w, sigma=self.sigma, k=self.k)
 
         Iw = (I[:,None,:,:] @ w_s[...,None]).squeeze(-1)   # (B,T,3)
-        E  = 0.5 * (w_s * Iw).sum(dim=-1)                  # (B,T)
+        E  = 0.5 * (w * Iw).sum(dim=-1)                  # (B,T)
 
-        # variance that ignores NaNs/Infs
-        E = torch.nan_to_num(E, nan=0.0, posinf=0.0, neginf=0.0)
-        L_E = E.var(dim=1, unbiased=False)
-
-        # 1) derivative penalty (unused) - use energy itself 
+        # 1) derivative penalty  ||dE/dt||^2
         dEdt = central_diff_1d(E, dt)
-        L_dEdt = (dEdt**2).mean(dim=1)                     # (B,)
+        L_deriv = (dEdt**2).mean(dim=1)                  # (B,)
 
         # 2) windowed variance (captures oscillations even if mean is right)
         L_win = sliding_var(E, win=win)                  # (B,)
@@ -579,52 +571,18 @@ class PhysicsLoss(nn.Module):
             vals, _ = torch.topk(v, k=k, largest=True, sorted=False)
             return vals.mean()
 
-        loss = (lam_E * topk_mean(L_E) +
+        loss = (lam_deriv * topk_mean(L_deriv) +
                 lam_win   * topk_mean(L_win)   +
-                lam_spec  * topk_mean(L_spec)  +
-                lam_dEdt  * topk_mean(L_dEdt)) 
+                lam_spec  * topk_mean(L_spec))
 
         terms = {
-            'E':  topk_mean(L_E).detach(),
+            'E_deriv':  topk_mean(L_deriv).detach(),
             'E_winvar': topk_mean(L_win).detach(),
-            'E_spec':   topk_mean(L_spec).detach(),
-            'E_dEdt':   topk_mean(L_dEdt).detach()
+            'E_spec':   topk_mean(L_spec).detach()
         }
         return loss, terms
-    
-    def axis_constancy_loss(self,q, w, I, lam_dir=1.0, lam_mag=0.5, eps=1e-12):
-        """
-        q: (B,T,4) scalar-first, unit
-        w: (B,T,3)
-        I: (B,3,3) SPD
-        returns: scalar loss
-        """
-        q = q.double(); w = w.double(); I = I.double()
 
-        # Body->inertial rotation matrices, force (B,T,3,3)
-        R = quat_to_R(q)                     # ensure your quat_to_R returns (B,T,3,3)
-        if R.dim() == 3:                     # if it returns (T,3,3) for single batch, fix it
-            R = R.unsqueeze(0).expand(q.size(0), -1, -1, -1)
-
-        # I ω in body frame -> (B,T,3)
-        Iw = torch.einsum('bij,btj->bti', I, w)       # (B,3,3) x (B,T,3)
-
-        # Angular momentum in inertial frame H_I(t) = R(t) * (I ω)(t)
-        H_I = torch.einsum('btij,btj->bti', R, Iw)    # (B,T,3)
-
-        # Direction constancy: 1 - cos(angle with batch mean direction)
-        Hm = H_I.mean(dim=1, keepdim=True)            # (B,1,3)
-        Hm_norm = torch.linalg.norm(Hm, dim=-1, keepdim=True).clamp_min(eps)  # (B,1,1)
-        HI_norm = torch.linalg.norm(H_I, dim=-1, keepdim=True).clamp_min(eps) # (B,T,1)
-        dir_cos = (H_I * Hm).sum(dim=-1, keepdim=True) / (HI_norm * Hm_norm)  # (B,T,1)
-        L_dir = (1.0 - dir_cos).mean()                # scalar
-
-        # Magnitude constancy: variance over time of ||H_I||
-        Hmag = HI_norm.squeeze(-1)                    # (B,T)
-        L_mag = Hmag.var(dim=1, unbiased=False).mean()
-
-        loss = lam_dir * L_dir + lam_mag * L_mag
-        return loss# ======================== trainer ========================
+# ======================== trainer ========================
 
 @dataclass
 class TrainCfg:
@@ -775,10 +733,10 @@ def main():
     ap.add_argument('--dt', type=float, default=0.01)
     ap.add_argument('--trainN', type=int, default=2000)
     ap.add_argument('--valN', type=int, default=300)
-    ap.add_argument('--lr', type=float, default=2e-4)
+    ap.add_argument('--lr', type=float, default=2e-2)
     ap.add_argument('--wd', type=float, default=1e-4)
-    ap.add_argument('--lamE', type=float, default=0.5)
-    ap.add_argument('--lamD', type=float, default=1)
+    ap.add_argument('--lamE', type=float, default=1.0)
+    ap.add_argument('--lamD', type=float, default=0.1)
     ap.add_argument('--noise', type=float, default=0.002)
     ap.add_argument('--dmodel', type=int, default=64)
     ap.add_argument('--layers', type=int, default=2)
@@ -918,7 +876,7 @@ def main():
             model.eval()
             with torch.no_grad():
                 vals = []
-                Lc, Ec, Dc,Ac = [], [], [],[]
+                Lc, Ec, Dc = [], [], []
                 Ipred_cpu, Itrue_cpu = [], []
                 for q, w, I, dt in val_loader:
                     q = q.to(device); w = w.to(device)
@@ -933,7 +891,6 @@ def main():
                     if 'L_const' in t:   Lc.append(float(t['L_const']))
                     if 'E_const' in t:   Ec.append(float(t['E_const']))
                     if 'Euler'   in t:   Dc.append(float(t['Euler']))
-                    if 'Axis_const'   in t:   Ac.append(float(t['Axis_const']))
                     # if 'E_deriv' in t:   Ec.append(float(t['E_deriv']))
                     # if 'E_winvar'in t:   Ec.append(float(t['E_winvar']))
                     # if 'E_spec'  in t:   Ec.append(float(t['E_spec']))
@@ -956,12 +913,11 @@ def main():
             mL = np.mean(Lc) if Lc else float('nan')
             mE = np.mean(Ec) if Ec else float('nan')
             mD = np.mean(Dc) if Dc else float('nan')
-            mA = np.mean(Ac) if Ac else float('nan')
             print(
                 f"[{ep:03d}] steps={global_steps} "
                 f"train={tr_loss:.4e} | val={vloss:.4e} (Δ={d_total:.2e}) | "
-                f"L={mL:.2e} E={mE:.2e} Dyn={mD:.2e} Axis={mA:.2e} | "
-                f"eigL2={rerr:.3e} axis={ascore:.3f} | lr={cur_lr:.2e} "
+                f"L={mL:.2e} E={mE:.2e} Dyn={mD:.2e} | "
+                f"eigL2={rerr:.3e} axis={ascore:.3f} | lr={cur_lr:.2e}"
             )
 
             # ---------- Track best / divergence guards ----------

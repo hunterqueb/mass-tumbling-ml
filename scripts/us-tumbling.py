@@ -456,10 +456,11 @@ class InertiaEncoder(nn.Module):
 # ======================== physics self-supervised loss ========================
 
 class PhysicsLoss(nn.Module):
-    def __init__(self, lam_energy=0.1, lam_dyn=1.0, smooth_sigma=2.5, smooth_k=9,dynamics_mode="tau"):
+    def __init__(self, lam_energy=0.1, lam_dyn=1.0, lam_axis = 0.1, smooth_sigma=2.5, smooth_k=9,dynamics_mode="tau"):
         super().__init__()
         self.lamE = lam_energy
         self.lamD = lam_dyn
+        self.lamA = lam_axis
         self.sigma = smooth_sigma
         self.k = 9  # use 9 or 11
         self.dynamics_mode = dynamics_mode
@@ -481,7 +482,10 @@ class PhysicsLoss(nn.Module):
 
         Linert = (R @ Iw[...,None]).squeeze(-1)
         Lmean  = Linert.mean(dim=1, keepdim=True)
-        loss_L = ((Linert - Lmean)**2).sum(dim=-1)
+        # find Linert derivative 
+        dLdt = central_diff_1d(Linert.norm(dim=-1), dt)  # (B,T)
+        # loss: dL/dt should be zero
+        loss_L = (dLdt**2)
 
         # E      = (w_s * Iw).sum(dim=-1) * 0.5
         # # variance that ignores NaNs/Infs
@@ -504,7 +508,7 @@ class PhysicsLoss(nn.Module):
         loss_D = torch.nan_to_num(loss_D,             nan=0.0).mean()
         loss_axis = torch.nan_to_num(loss_axis,       nan=0.0).mean()
 
-        loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D + 0.1*loss_axis).float()
+        loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D + self.lamA*loss_axis).float()
         return loss, {'L_const': loss_L.float(), 'E_const': loss_E.float(), 'Euler': loss_D.float(), 'Axis_const': loss_axis.float()}
 
     def dynamics_losses(self,I64, w_s, wdot, tau=None):
@@ -632,13 +636,14 @@ class TrainCfg:
     wd: float = 1e-4
     lam_energy: float = 0.1
     lam_dyn: float = 1.0
+    lam_axis: float = 0.1
     device: str = 'cuda'
     residual: str = 'tau'  # 'tau' or 'wdot'
 
 class InertiaTrainer:
     def __init__(self, model: InertiaMambaEstimator, cfg: TrainCfg):
         self.model = model.to(cfg.device)
-        self.loss_fn = PhysicsLoss(cfg.lam_energy, cfg.lam_dyn,dynamics_mode=cfg.residual).to(cfg.device)
+        self.loss_fn = PhysicsLoss(cfg.lam_energy, cfg.lam_dyn,cfg.lam_axis,dynamics_mode=cfg.residual).to(cfg.device)
         self.opt = torch.optim.AdamW(self.model.parameters(), lr=cfg.lr, weight_decay=cfg.wd)
         self.device = cfg.device
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -779,6 +784,7 @@ def main():
     ap.add_argument('--wd', type=float, default=1e-4)
     ap.add_argument('--lamE', type=float, default=0.5)
     ap.add_argument('--lamD', type=float, default=1)
+    ap.add_argument('--lamA', type=float, default=0.1)
     ap.add_argument('--noise', type=float, default=0.002)
     ap.add_argument('--dmodel', type=int, default=64)
     ap.add_argument('--layers', type=int, default=2)
@@ -1129,7 +1135,7 @@ def main():
     model_transformer = build_estimator(kind="transformer", d_model=args.dmodel, n_layers=args.layers).to(device)
     model_tcn = build_estimator(kind="tcn", d_model=args.dmodel, n_layers=args.layers).to(device)
 
-    tcfg = TrainCfg(lr=args.lr, wd=args.wd, lam_energy=args.lamE, lam_dyn=args.lamD, device=device,residual=args.residual)
+    tcfg = TrainCfg(lr=args.lr, wd=args.wd, lam_energy=args.lamE, lam_dyn=args.lamD,lam_axis=args.lamA, device=device,residual=args.residual)
     trainer_mamba = InertiaTrainer(model_mamba, tcfg)
     trainer_lstm = InertiaTrainer(model_lstm, tcfg)
     trainer_transformer = InertiaTrainer(model_transformer, tcfg)

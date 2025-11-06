@@ -481,7 +481,10 @@ class PhysicsLoss(nn.Module):
 
         Linert = (R @ Iw[...,None]).squeeze(-1)
         Lmean  = Linert.mean(dim=1, keepdim=True)
-        loss_L = ((Linert - Lmean)**2).sum(dim=-1)
+        # find Linert derivative 
+        dLdt = central_diff_1d(Linert.norm(dim=-1), dt)  # (B,T)
+        # loss: dL/dt should be zero
+        loss_L = (dLdt**2)
 
         # E      = (w_s * Iw).sum(dim=-1) * 0.5
         # # variance that ignores NaNs/Infs
@@ -777,8 +780,8 @@ def main():
     ap.add_argument('--valN', type=int, default=300)
     ap.add_argument('--lr', type=float, default=2e-4)
     ap.add_argument('--wd', type=float, default=1e-4)
-    ap.add_argument('--lamE', type=float, default=0.5)
-    ap.add_argument('--lamD', type=float, default=1)
+    ap.add_argument('--lamE', type=float, default=1.0)
+    ap.add_argument('--lamD', type=float, default=0.1)
     ap.add_argument('--noise', type=float, default=0.002)
     ap.add_argument('--dmodel', type=int, default=64)
     ap.add_argument('--layers', type=int, default=2)
@@ -1135,18 +1138,18 @@ def main():
     trainer_transformer = InertiaTrainer(model_transformer, tcfg)
     trainer_tcn = InertiaTrainer(model_tcn, tcfg)
 
-    # print("training lstm")
-    # train(model_lstm,trainer_lstm)
-    # validate(model_lstm,trainer_lstm)
+    print("training lstm")
+    train(model_lstm,trainer_lstm)
+    validate(model_lstm,trainer_lstm)
     print("training mamba")
     train(model_mamba,trainer_mamba)
     validate(model_mamba,trainer_mamba)
-    # print("training transformer")
-    # train(model_transformer,trainer_transformer)
-    # validate(model_transformer,trainer_transformer)
-    # print("training tcn")
-    # train(model_tcn,trainer_tcn)
-    # validate(model_tcn,trainer_tcn)
+    print("training transformer")
+    train(model_transformer,trainer_transformer)
+    validate(model_transformer,trainer_transformer)
+    print("training tcn")
+    train(model_tcn,trainer_tcn)
+    validate(model_tcn,trainer_tcn)
 
 
     if not args.save:
