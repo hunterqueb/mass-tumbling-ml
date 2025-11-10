@@ -57,6 +57,16 @@ def central_diff(x: torch.Tensor, dt: float) -> torch.Tensor:
     dx[:,:1,:]   = (x[:,1:2,:] - x[:,:1,:])/dt
     dx[:,-1:,:]  = (x[:,-1:,:] - x[:,-2:-1,:])/dt
     return dx
+def central_diff_vec(x, dt: float):
+    """
+    x: (B, T, D) over time dimension 1
+    returns dx/dt with same shape
+    """
+    dx = torch.empty_like(x)
+    dx[:,1:-1] = (x[:,2:] - x[:,:-2]) / (2.0*dt)
+    dx[:, :1]  = (x[:,1:2] - x[:, :1]) / dt
+    dx[:, -1:] = (x[:, -1:] - x[:, -2:-1]) / dt
+    return dx
 
 def as_scalar_dt(dt):
     # Accept float/int, tensor, list/tuple; return a Python float
@@ -481,7 +491,17 @@ class PhysicsLoss(nn.Module):
 
         Linert = (R @ Iw[...,None]).squeeze(-1)
         Lmean  = Linert.mean(dim=1, keepdim=True)
-        loss_L = ((Linert - Lmean)**2).sum(dim=-1)
+        Ldev   = Linert - Lmean                          # (B,T,3)
+        loss_L_const_seq = (Ldev**2).sum(dim=-1).mean(dim=1)  # (B,) mean over time
+        loss_L_const = loss_L_const_seq.mean()           # scalar over batch
+
+        Ldot   = central_diff(Linert, dt)               # (B,T,3)
+        Ldot   = torch.clamp(Ldot, min=-500.0, max=500.0)
+
+        loss_L_deriv_seq = (Ldot**2).sum(dim=-1).mean(dim=1)  # (B,)
+        loss_L_deriv = loss_L_deriv_seq.mean()
+
+        loss_L = loss_L_const + 0.5 * loss_L_deriv
 
         # E      = (w_s * Iw).sum(dim=-1) * 0.5
         # # variance that ignores NaNs/Infs
@@ -499,12 +519,12 @@ class PhysicsLoss(nn.Module):
         loss_axis = self.axis_constancy_loss(q64, w_s, I64)
 
         # sanitize per-sequence mean, then mean over batch
-        loss_L = torch.nan_to_num(loss_L.mean(dim=1), nan=0.0).mean()
+        loss_L = torch.nan_to_num(loss_L,             nan=0.0).mean()
         loss_E = torch.nan_to_num(loss_E,             nan=0.0).mean()
         loss_D = torch.nan_to_num(loss_D,             nan=0.0).mean()
         loss_axis = torch.nan_to_num(loss_axis,       nan=0.0).mean()
 
-        loss = (loss_L + self.lamE*loss_E + self.lamD*loss_D + 0.1*loss_axis).float()
+        loss = (0.5 * loss_L + self.lamE*loss_E + self.lamD*loss_D + 0.1*loss_axis).float()
         return loss, {'L_const': loss_L.float(), 'E_const': loss_E.float(), 'Euler': loss_D.float(), 'Axis_const': loss_axis.float()}
 
     def dynamics_losses(self,I64, w_s, wdot, tau=None):
@@ -813,7 +833,7 @@ def main():
         sys.stdout = Tee(sys.stdout, log_file)
 
         # save args
-        with open(os.path.join(log_dir, "args.txt"), "w") as f:
+        with open(os.path.join(log_dir, "args.txt"), "w", encoding="utf-8") as f:
             for k,v in vars(args).items():
                 f.write(f"{k}: {v}\n")
 
@@ -959,7 +979,7 @@ def main():
             mA = np.mean(Ac) if Ac else float('nan')
             print(
                 f"[{ep:03d}] steps={global_steps} "
-                f"train={tr_loss:.4e} | val={vloss:.4e} (Δ={d_total:.2e}) | "
+                f"train={tr_loss:.4e} | val={vloss:.4e} (del={d_total:.2e}) | "
                 f"L={mL:.2e} E={mE:.2e} Dyn={mD:.2e} Axis={mA:.2e} | "
                 f"eigL2={rerr:.3e} axis={ascore:.3f} | lr={cur_lr:.2e} "
             )
@@ -1135,18 +1155,18 @@ def main():
     trainer_transformer = InertiaTrainer(model_transformer, tcfg)
     trainer_tcn = InertiaTrainer(model_tcn, tcfg)
 
-    # print("training lstm")
-    # train(model_lstm,trainer_lstm)
-    # validate(model_lstm,trainer_lstm)
+    print("training lstm")
+    train(model_lstm,trainer_lstm)
+    validate(model_lstm,trainer_lstm)
     print("training mamba")
     train(model_mamba,trainer_mamba)
     validate(model_mamba,trainer_mamba)
-    # print("training transformer")
-    # train(model_transformer,trainer_transformer)
-    # validate(model_transformer,trainer_transformer)
-    # print("training tcn")
-    # train(model_tcn,trainer_tcn)
-    # validate(model_tcn,trainer_tcn)
+    print("training transformer")
+    train(model_transformer,trainer_transformer)
+    validate(model_transformer,trainer_transformer)
+    print("training tcn")
+    train(model_tcn,trainer_tcn)
+    validate(model_tcn,trainer_tcn)
 
 
     if not args.save:
