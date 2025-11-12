@@ -2,13 +2,14 @@
 clear; clc;
 
 %% Inertia
-J   =  100 * [[ 0.3905  0.0567  0.1052]
+J   = 100* [[ 0.3905  0.0567  0.1052]
  [ 0.0567  0.3803 -0.115 ]
- [ 0.1052 -0.115   0.2292]] + diag([20,25,15])
+ [ 0.1052 -0.115   0.2292]] %+ diag([20,25,15])
 
-J_rand =  [[ 0.3466  0.0132  0.0233]
- [ 0.0132  0.3365 -0.0185]
- [ 0.0233 -0.0185  0.3169]] + diag([20,25,15])
+J_rand =    [[ 0.3868  0.0468  0.0886]
+ [ 0.0468  0.3694 -0.1004]
+ [ 0.0886 -0.1004  0.2439]]
+ %+ diag([20,25,15])
 
 %% Linearized A, B (same as before)
 A = [zeros(3), eye(3);
@@ -64,13 +65,13 @@ subplot(2,1,1);
 plot(t, rad2deg(delta_theta));
 xlabel('t [s]'); ylabel('\delta\theta [deg]');
 legend('\delta\theta_x','\delta\theta_y','\delta\theta_z');
-grid on; title('Attitude error (small-angle approx)');
+grid on; title('Attitude error (small-angle approx) [True Inertia Matrix]');
 
 subplot(2,1,2);
 plot(t, rad2deg(w));
 xlabel('t [s]'); ylabel('\omega [deg/s]');
 legend('\omega_x','\omega_y','\omega_z');
-grid on; title('Body rates');
+grid on; title('Body rates [True Inertia Matrix]');
 
 
 
@@ -138,13 +139,13 @@ subplot(2,1,1);
 plot(t, rad2deg(delta_theta));
 xlabel('t [s]'); ylabel('\delta\theta [deg]');
 legend('\delta\theta_x','\delta\theta_y','\delta\theta_z');
-grid on; title('Attitude error (small-angle approx)');
+grid on; title('Attitude error (small-angle approx) [NN Estimated Inertia Matrix]');
 
 subplot(2,1,2);
 plot(t, rad2deg(w));
 xlabel('t [s]'); ylabel('\omega [deg/s]');
 legend('\omega_x','\omega_y','\omega_z');
-grid on; title('Body rates');
+grid on; title('Body rates [NN Estimated Inertia Matrix]');
 
 
 err = x_tr - x_r;

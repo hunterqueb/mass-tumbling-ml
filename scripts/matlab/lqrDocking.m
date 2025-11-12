@@ -10,6 +10,11 @@ J_docked = 100 * [ 0.3466  0.0132  0.0233
        0.0233 -0.0185  0.3169 ] ...
            + diag([20,25,15]);
 
+J_est = [ 0.3466  0.0132  0.0233
+       0.0132  0.3365 -0.0185
+       0.0233 -0.0185  0.3169 ] ...
+           + diag([20,25,15]);
+
 %% LQR weights (same for both, but you can change them if you want)
 q_att_weight    = 1e3;
 q_omega_weight  = 10;
@@ -40,7 +45,7 @@ opts = odeset('RelTol',1e-9,'AbsTol',1e-9);
 x_dock = x1(end,:).';   % state at docking instant
 
 %% Phase 2: post-dock (chaser + target, new inertia and new K)
-[t2, x2] = ode45(@(t,x) satDynamicsLQR(t, x, J_docked, K_docked), [t_dock tf], x_dock, opts);
+[t2, x2] = ode45(@(t,x) satDynamicsLQR(t, x, J_est, K_docked), [t_dock tf], x_dock, opts);
 
 %% Concatenate results
 t  = [t1; t2];

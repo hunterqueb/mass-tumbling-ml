@@ -2,24 +2,24 @@
 clear; clc;
 
 %% True inertia (plant) after docking
-J_true = 100 * [ 0.3905  0.0567  0.1052
+J_true = [ 0.3905  0.0567  0.1052
                  0.0567  0.3803 -0.1150
                  0.1052 -0.1150  0.2292 ] ...
-         + diag([20,25,15]);
+         %+ diag([20,25,15]);
 
 %% Initial full inertia estimate J0
-J0 = [ 0.3466  0.0132  0.0233
-       0.0132  0.3365 -0.0185
-       0.0233 -0.0185  0.3169 ] ...
-     + diag([20,25,15]);
+J0 =  [[ 0.3868  0.0468  0.0886]
+ [ 0.0468  0.3694 -0.1004]
+ [ 0.0886 -0.1004  0.2439]] ...
+     %+ diag([20,25,15]);
 J0 = (J0 + J0')/2;   % enforce symmetry
 
 %% Control gains (tune)
-K_R     = 30 * eye(3);   % attitude gain
-K_Omega = 10 * eye(3);   % rate gain
+K_R     = .3 * eye(3);   % attitude gain
+K_Omega = .1 * eye(3);   % rate gain
 
 %% Adaptation gain
-Gamma_J = 1 * eye(3);  % diag gains for J update
+Gamma_J = 5 * eye(3);  % diag gains for J update
 
 %% Initial attitude / rate
 ang0  = deg2rad(20);        % bigger error to actually see dynamics
