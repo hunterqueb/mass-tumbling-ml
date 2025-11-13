@@ -16,7 +16,7 @@ Q_est =  [[ 0.3868  0.0468  0.0886]
 
 % 2) Time step and number of samples
 dt   = 0.01;      % sample period [s]
-Tend = 20.0;      % total time [s]
+Tend = 100.0;      % total time [s]
 N    = round(Tend/dt) + 1;
 
 t = (0:N-1)' * dt;
