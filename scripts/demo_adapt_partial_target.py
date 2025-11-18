@@ -46,7 +46,6 @@ def vec(M):
     M = np.asarray(M)
     return M.reshape(-1, order="F")
 
-
 def dyn_partial_adapt_v2(t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, dith):
     """
     x = [q(4), w(3), alpha(3)]
@@ -125,16 +124,20 @@ def dyn_partial_adapt_v2(t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, di
 def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),    
                               Jt_est = np.diag([0.188065, 0.405968, 0.405968]),
                               Jt_diag_true = 100.0 * np.diag([0.146925, 0.417965, 0.435109]),
+                              initialization = "random",
+                              Gamma_scale = 10.0,
+                              Kr = 30.0,
+                              Kom = 10.0
                               ):
-    np.random.seed(0)
-    tf = 100.0    
+    np.random.seed(1110)
+    tf = 60.0    
 
     # -------- Weaken feedback (so inertia matters) --------
-    K_R = 30.0 * np.eye(3)
-    K_Om = 10.0 * np.eye(3)
+    K_R = Kr * np.eye(3)
+    K_Om = Kom * np.eye(3)
 
     # -------- Fast adaptation + normalization --------
-    Gamma = 10.0 * np.diag([0.3, 0.3, 0.3])
+    Gamma = Gamma_scale * np.diag([0.3, 0.3, 0.3])
     eps_reg = 1e-6
 
     # -------- Estimated target (principal frame) --------
@@ -172,7 +175,7 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
     w0 = np.deg2rad(np.array([1.2, -0.8, 0.9], dtype=float))
 
     dith = {
-        "A": 0.0,
+        "A": 0,
         "w": 2.0 * np.pi * np.array([0.4, 0.7, 1.1], dtype=float),
     }
     alpha0 = np.array([1.0, 1.0, 1.0], dtype=float)
@@ -218,18 +221,25 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
         J_hat_diag[k, :] = np.diag(J_fixed + Jt_hat_k)
         Frob_err[k] = np.linalg.norm(Jt_hat_k - Jt_true, ord="fro")
 
+    print("Time when ||Jt_hat - Jt_true||_F < 1e-1 for " + initialization + " Initialization:", end=" ")
+    below_thresh_indices = np.where(Frob_err < 1e-1)[0]
+    if len(below_thresh_indices) > 0:
+        first_below_index = below_thresh_indices[0]
+        print(f"{t[first_below_index]:.2f} s")
+    else:
+        print("Not reached within simulation time.")
     dtheta = 2.0 * q[:, 1:4]
 
     # ---------- Plots: NN estimation ----------
     colors_true = ['C0', 'C1', 'C2']
 
-    plt.figure("Attitude & Rates (NN Estimation)")
+    plt.figure("Attitude & Rates (" + initialization + " Initialization)")
     plt.subplot(2, 1, 1)
     plt.plot(t, np.rad2deg(dtheta))
     plt.ylabel(r"$\delta\theta$ [deg]")
     plt.grid(True)
     plt.legend([r"$\delta\theta_x$", r"$\delta\theta_y$", r"$\delta\theta_z$"])
-    plt.title("Attitude & Rates (NN Estimation)")
+    plt.title("Attitude & Rates (" + initialization + " Initialization)")
 
     plt.subplot(2, 1, 2)
     plt.plot(t, np.rad2deg(w))
@@ -238,7 +248,7 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
     plt.grid(True)
     plt.legend([r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"])
 
-    plt.figure("Target inertia (NN Estimation)")
+    plt.figure("Target inertia (" + initialization + " Initialization)")
     plt.plot(t, Jt_hat_diag)
     Jt_true_diag = np.diag(Jt_true)
     for j in range(3):
@@ -256,9 +266,9 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
             r"$J_{t,33}^{true}$",
         ]
     )
-    plt.title("Target inertia (NN Estimation)")
+    plt.title("Target inertia (" + initialization + " Initialization)")
 
-    plt.figure("Total inertia diagonal (NN Estimation)")
+    plt.figure("Total inertia diagonal (" + initialization + " Initialization)")
     plt.plot(t, J_hat_diag)
     J_true_diag = np.diag(J_true)
     for j in range(3):
@@ -276,9 +286,9 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
             r"$J_{33}^{true}$",
         ]
     )
-    plt.title("Total inertia diagonal (NN Estimation)")
+    plt.title("Total inertia diagonal (" + initialization + " Initialization)")
 
-    plt.figure("Alpha vs best-fit (NN Estimation)")
+    plt.figure("Alpha vs best-fit (" + initialization + " Initialization)")
     plt.plot(t, alpha)
     for j in range(3):
         plt.axhline(alpha_star[j], linestyle=":",color=colors_true[j])
@@ -295,7 +305,7 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
             r"$\alpha_3^\ast$",
         ]
     )
-    plt.title("Alpha vs best-fit (Random Initialization)")
+    plt.title("Alpha vs best-fit (" + initialization + " Initialization)")
 
     plt.figure()
     plt.plot(t, Frob_err)
@@ -304,176 +314,24 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
     plt.title("Frobenius norm of inertia estimation error")
     plt.grid(True)
 
-    # Store last Jt_hat from NN run
-    J_hat_NN = Jt_hat_k.copy()
+    # Store last Jt_hat from run
+    J_hat = Jt_hat_k.copy()
 
-    # ================== Second run: random J_target init ==================
-
-    # Estimated target (principal frame): random diagonal
-    Jt_est2 = np.diag(np.random.rand(3))
-    L0, Vt = np.linalg.eigh(0.5 * (Jt_est + Jt_est.T))  # eigenvalues, eigenvectors
-
-    L0_2,Vt2 = np.linalg.eigh(0.5 * (Jt_est2 + Jt_est2.T))
-    lambda0_2 = np.diag(L0_2)
-
-    v1 = R_bt @ Vt2[:, 0]
-    v2 = R_bt @ Vt2[:, 1]
-    v3 = R_bt @ Vt2[:, 2]
-    S1 = lambda0_2[0] * np.outer(v1, v1)
-    S2 = lambda0_2[1] * np.outer(v2, v2)
-    S3 = lambda0_2[2] * np.outer(v3, v3)
-    S = np.stack([S1, S2, S3], axis=2)
-
-    # Best-fit alpha* in chosen basis (for plotting)
-    A = np.column_stack([vec(S1), vec(S2), vec(S3)])
-    b = vec(Jt_true)
-    alpha_star, *_ = np.linalg.lstsq(A, b, rcond=None)
-
-    # Weaken feedback (more) so inertia matters
-    K_R = 0.3 * np.eye(3)
-    K_Om = 0.1 * np.eye(3)
-
-    # Fast adaptation again
-    Gamma = 10.0 * np.diag([0.3, 0.3, 0.3])
-    eps_reg = 1e-6
-
-    ang_deg = 25.0
-    axis0 = np.array([1.0, 0.7, 0.4], dtype=float)
-    axis0 = axis0 / np.linalg.norm(axis0)
-    q0 = axang2quat(axis0, np.deg2rad(ang_deg))
-    w0 = np.deg2rad(np.array([1.2, -0.8, 0.9], dtype=float))
-    alpha0 = np.array([1.0, 1.0, 1.0], dtype=float)
-
-    x0 = np.concatenate([q0, w0, alpha0])
-
-    # dith is kept as before but amplitude is effectively zero (no new setting)
-    sol2 = solve_ivp(
-        fun=lambda t, x: dyn_partial_adapt_v2(
-            t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, dith
-        ),
-        t_span=(0.0, tf),
-        y0=x0,
-        rtol=1e-12,
-        atol=1e-12,
-        dense_output=False,
-    )
-
-    t2 = sol2.t
-    x2 = sol2.y.T
-
-    q2 = x2[:, 0:4].copy()
-    for k in range(q2.shape[0]):
-        n_q = np.linalg.norm(q2[k])
-        q2[k] /= max(n_q, 1e-12)
-    w2 = x2[:, 4:7]
-    alpha2 = x2[:, 7:10]
-
-    N2 = t2.size
-    Jt_hat_diag2 = np.zeros((N2, 3))
-    J_hat_diag2 = np.zeros((N2, 3))
-    Frob_err2 = np.zeros(N2)
-
-    for k in range(N2):
-        Jt_hat_k2 = (
-            alpha2[k, 0] * S[:, :, 0]
-            + alpha2[k, 1] * S[:, :, 1]
-            + alpha2[k, 2] * S[:, :, 2]
-        )
-        Jt_hat_k2 = 0.5 * (Jt_hat_k2 + Jt_hat_k2.T)
-        Jt_hat_diag2[k, :] = np.diag(Jt_hat_k2)
-        J_hat_diag2[k, :] = np.diag(J_fixed + Jt_hat_k2)
-        Frob_err2[k] = np.linalg.norm(Jt_hat_k2 - Jt_true, ord="fro")
-
-    dtheta2 = 2.0 * q2[:, 1:4]
-
-    # ---------- Plots: random initialization ----------
-    plt.figure("Attitude & Rates (Random Initialization)")
-    plt.subplot(2, 1, 1)
-    plt.plot(t2, np.rad2deg(dtheta2))
-    plt.ylabel(r"$\delta\theta$ [deg]")
-    plt.grid(True)
-    plt.legend([r"$\delta\theta_x$", r"$\delta\theta_y$", r"$\delta\theta_z$"])
-    plt.title("Attitude & Rates (Random Initialization)")
-
-    plt.subplot(2, 1, 2)
-    plt.plot(t2, np.rad2deg(w2))
-    plt.xlabel("t [s]")
-    plt.ylabel(r"$\omega$ [deg/s]")
-    plt.grid(True)
-    plt.legend([r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"])
-
-    plt.figure("Target inertia (Random Initialization)")
-    plt.plot(t2, Jt_hat_diag2)
-    Jt_true_diag = np.diag(Jt_true)
-    for j in range(3):
-        plt.axhline(Jt_true_diag[j], linestyle=":",color= colors_true[j])
-    plt.xlabel("t [s]")
-    plt.ylabel(r"diag($J_{target}$) [kg m$^2$]")
-    plt.grid(True)
-    plt.legend(
-        [
-            r"$\hat J_{t,11}$",
-            r"$\hat J_{t,22}$",
-            r"$\hat J_{t,33}$",
-            r"$J_{t,11}^{true}$",
-            r"$J_{t,22}^{true}$",
-            r"$J_{t,33}^{true}$",
-        ]
-    )
-    plt.title("Target inertia (Random Initialization)")
-
-    plt.figure("Total inertia diagonal (Random Initialization)")
-    plt.plot(t2, J_hat_diag2)
-    J_true_diag = np.diag(J_true)
-    for j in range(3):
-        plt.axhline(J_true_diag[j], linestyle=":",color = colors_true[j])
-    plt.xlabel("t [s]")
-    plt.ylabel(r"diag($J_{total}$) [kg m$^2$]")
-    plt.grid(True)
-    plt.legend(
-        [
-            r"$\hat J_{11}$",
-            r"$\hat J_{22}$",
-            r"$\hat J_{33}$",
-            r"$J_{11}^{true}$",
-            r"$J_{22}^{true}$",
-            r"$J_{33}^{true}$",
-        ]
-    )
-    plt.title("Total inertia diagonal (Random Initialization)")
-
-    plt.figure("Alpha vs best-fit (Random Initialization)")
-    plt.plot(t2, alpha2)
-    for j in range(3):
-        plt.axhline(alpha_star[j], linestyle=":",color= colors_true[j])
-    plt.xlabel("t [s]")
-    plt.ylabel(r"$\alpha_i$")
-    plt.grid(True)
-    plt.legend(
-        [
-            r"$\alpha_1$",
-            r"$\alpha_2$",
-            r"$\alpha_3$",
-            r"$\alpha_1^\ast$",
-            r"$\alpha_2^\ast$",
-            r"$\alpha_3^\ast$",
-        ]
-    )
-    plt.title("Alpha vs best-fit (Random Initialization)")
-
-    plt.figure()
-    plt.plot(t2, Frob_err2)
-    plt.xlabel("t [s]")
-    plt.ylabel(r"$\|J_{\hat{t}} - J_{t}^{true}\|_F$")
-    plt.title("Frobenius norm of inertia estimation error")
-    plt.grid(True)
-
-    # Last Jt_hat from random run
-    J_hat_rand = Jt_hat_k2.copy()
-
-    return J_hat_NN, J_hat_rand, J_true, Jt_true
+    return J_hat, J_true, Jt_true
 
 
 if __name__ == "__main__":
-    J_hat_NN, J_hat_rand, J_true, Jt_true = demo_adapt_partial_target()
+    J_fixed = [[1200,100,-200],[100,2200,300], [-200,300,3100]] # from spacecraft modeling attitude determination and control quaternion based approach pg 140
+    Jt_diag_true = 1 * np.diag([1.135114, 2.450324, 2.450324])
+    # the larger the target craft, the faster the NN adapts compared to rand initialization
+    
+    J_one_epoch = [0.31198,0.335318,0.352703]
+    J_mamba = [0.125538,0.435155,0.439306]
+    J_transformer = [0.298614,0.344211,0.357174]
+
+    Jt_est = np.diag(J_transformer)
+    Jt_est_rand = np.diag(np.random.rand(3))  
+    
+    J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=Jt_diag_true, Jt_est=Jt_est,initialization="NN",Kom = 1000,Kr = 3000)
+    J_hat_rand, J_true, Jt_true = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=Jt_diag_true, Jt_est=Jt_est_rand, initialization="random",Gamma_scale=5.0,Kom = 1000,Kr = 3000)
     plt.show()
