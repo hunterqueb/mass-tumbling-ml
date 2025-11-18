@@ -1,0 +1,425 @@
+Logging to logs/selfsup_mamba_20251118-121244
+GPU is available
+Loaded datasets from data/shapes/2000/self-sup-
+training lstm
+[001] steps=250 train=1.2355e+01 | val=1.1931e+01 (del=inf) | L=7.17e+00 E=3.87e+00 Dyn=6.40e+00 Axis=1.14e-01 | eigL2=1.835e-01 axis=0.861 | lr=2.00e-04 
+[002] steps=500 train=1.1636e+01 | val=1.1973e+01 (del=-3.55e-03) | L=7.17e+00 E=4.08e+00 Dyn=6.34e+00 Axis=1.15e-01 | eigL2=1.826e-01 axis=0.842 | lr=2.00e-04 
+[003] steps=750 train=1.1504e+01 | val=1.1628e+01 (del=2.88e-02) | L=6.62e+00 E=4.12e+00 Dyn=6.24e+00 Axis=1.13e-01 | eigL2=1.849e-01 axis=0.858 | lr=2.00e-04 
+[004] steps=1000 train=1.1244e+01 | val=1.1389e+01 (del=2.06e-02) | L=6.70e+00 E=4.14e+00 Dyn=5.96e+00 Axis=1.13e-01 | eigL2=1.844e-01 axis=0.860 | lr=2.00e-04 
+[005] steps=1250 train=1.0958e+01 | val=1.1102e+01 (del=2.52e-02) | L=6.24e+00 E=4.56e+00 Dyn=5.69e+00 Axis=1.10e-01 | eigL2=1.855e-01 axis=0.855 | lr=2.00e-04 
+[006] steps=1500 train=1.0604e+01 | val=1.0666e+01 (del=3.93e-02) | L=5.95e+00 E=4.69e+00 Dyn=5.34e+00 Axis=1.08e-01 | eigL2=1.854e-01 axis=0.857 | lr=2.00e-04 
+[007] steps=1750 train=1.0278e+01 | val=1.0345e+01 (del=3.01e-02) | L=5.74e+00 E=4.85e+00 Dyn=5.04e+00 Axis=1.07e-01 | eigL2=1.850e-01 axis=0.860 | lr=2.00e-04 
+[008] steps=2000 train=1.0012e+01 | val=1.0295e+01 (del=4.82e-03) | L=5.59e+00 E=5.43e+00 Dyn=4.77e+00 Axis=1.05e-01 | eigL2=1.829e-01 axis=0.865 | lr=2.00e-04 
+[009] steps=2250 train=9.7463e+00 | val=9.9650e+00 (del=3.20e-02) | L=5.68e+00 E=5.22e+00 Dyn=4.51e+00 Axis=1.04e-01 | eigL2=1.807e-01 axis=0.863 | lr=2.00e-04 
+[010] steps=2500 train=9.4284e+00 | val=9.9481e+00 (del=1.70e-03) | L=5.56e+00 E=5.78e+00 Dyn=4.27e+00 Axis=1.03e-01 | eigL2=1.817e-01 axis=0.862 | lr=2.00e-04 
+[011] steps=2750 train=9.1500e+00 | val=1.0082e+01 (del=-1.35e-02) | L=5.19e+00 E=6.46e+00 Dyn=4.25e+00 Axis=9.88e-02 | eigL2=1.807e-01 axis=0.870 | lr=2.00e-04 
+[012] steps=3000 train=8.8939e+00 | val=9.5270e+00 (del=5.51e-02) | L=5.43e+00 E=5.73e+00 Dyn=3.94e+00 Axis=9.97e-02 | eigL2=1.766e-01 axis=0.873 | lr=2.00e-04 
+[013] steps=3250 train=8.7286e+00 | val=9.3827e+00 (del=1.51e-02) | L=5.07e+00 E=6.13e+00 Dyn=3.77e+00 Axis=9.65e-02 | eigL2=1.758e-01 axis=0.872 | lr=2.00e-04 
+[014] steps=3500 train=8.5032e+00 | val=9.3646e+00 (del=1.93e-03) | L=5.01e+00 E=6.49e+00 Dyn=3.60e+00 Axis=9.58e-02 | eigL2=1.761e-01 axis=0.880 | lr=2.00e-04 
+[015] steps=3750 train=8.2327e+00 | val=9.0684e+00 (del=3.16e-02) | L=5.05e+00 E=5.79e+00 Dyn=3.64e+00 Axis=9.70e-02 | eigL2=1.746e-01 axis=0.880 | lr=2.00e-04 
+[016] steps=4000 train=8.0284e+00 | val=8.9916e+00 (del=8.47e-03) | L=5.33e+00 E=5.91e+00 Dyn=3.36e+00 Axis=9.62e-02 | eigL2=1.719e-01 axis=0.881 | lr=2.00e-04 
+[017] steps=4250 train=7.8145e+00 | val=8.8681e+00 (del=1.37e-02) | L=4.95e+00 E=6.28e+00 Dyn=3.25e+00 Axis=9.30e-02 | eigL2=1.727e-01 axis=0.876 | lr=2.00e-04 
+[018] steps=4500 train=7.6788e+00 | val=8.7960e+00 (del=8.12e-03) | L=4.93e+00 E=6.09e+00 Dyn=3.27e+00 Axis=9.23e-02 | eigL2=1.700e-01 axis=0.886 | lr=2.00e-04 
+[019] steps=4750 train=7.5208e+00 | val=8.7220e+00 (del=8.42e-03) | L=4.59e+00 E=6.50e+00 Dyn=3.17e+00 Axis=9.02e-02 | eigL2=1.706e-01 axis=0.879 | lr=2.00e-04 
+[020] steps=5000 train=7.3189e+00 | val=8.8296e+00 (del=-1.23e-02) | L=5.10e+00 E=6.52e+00 Dyn=3.01e+00 Axis=9.13e-02 | eigL2=1.669e-01 axis=0.871 | lr=2.00e-04 
+[021] steps=5250 train=7.1951e+00 | val=8.4915e+00 (del=3.83e-02) | L=4.51e+00 E=6.59e+00 Dyn=2.93e+00 Axis=8.85e-02 | eigL2=1.709e-01 axis=0.883 | lr=2.00e-04 
+[022] steps=5500 train=7.0855e+00 | val=8.3021e+00 (del=2.23e-02) | L=4.67e+00 E=6.17e+00 Dyn=2.87e+00 Axis=8.72e-02 | eigL2=1.688e-01 axis=0.883 | lr=2.00e-04 
+[023] steps=5750 train=6.9314e+00 | val=8.5698e+00 (del=-3.22e-02) | L=4.63e+00 E=6.91e+00 Dyn=2.79e+00 Axis=8.60e-02 | eigL2=1.683e-01 axis=0.879 | lr=2.00e-04 
+[024] steps=6000 train=6.7499e+00 | val=8.5147e+00 (del=6.43e-03) | L=4.31e+00 E=6.98e+00 Dyn=2.86e+00 Axis=8.51e-02 | eigL2=1.719e-01 axis=0.880 | lr=2.00e-04 
+[025] steps=6250 train=6.6099e+00 | val=8.1255e+00 (del=4.57e-02) | L=4.36e+00 E=6.49e+00 Dyn=2.69e+00 Axis=8.46e-02 | eigL2=1.673e-01 axis=0.885 | lr=2.00e-04 
+[026] steps=6500 train=6.5366e+00 | val=8.2667e+00 (del=-1.74e-02) | L=4.30e+00 E=6.91e+00 Dyn=2.65e+00 Axis=8.49e-02 | eigL2=1.686e-01 axis=0.880 | lr=2.00e-04 
+[027] steps=6750 train=6.4181e+00 | val=8.1592e+00 (del=1.30e-02) | L=4.31e+00 E=6.66e+00 Dyn=2.67e+00 Axis=8.48e-02 | eigL2=1.698e-01 axis=0.879 | lr=2.00e-04 
+[028] steps=7000 train=6.3163e+00 | val=8.2917e+00 (del=-1.62e-02) | L=4.31e+00 E=7.08e+00 Dyn=2.59e+00 Axis=8.47e-02 | eigL2=1.703e-01 axis=0.882 | lr=2.00e-04 
+[029] steps=7250 train=6.2775e+00 | val=8.0184e+00 (del=3.30e-02) | L=4.27e+00 E=6.77e+00 Dyn=2.49e+00 Axis=8.39e-02 | eigL2=1.671e-01 axis=0.881 | lr=2.00e-04 
+[030] steps=7500 train=6.1037e+00 | val=7.9996e+00 (del=2.34e-03) | L=4.38e+00 E=6.54e+00 Dyn=2.53e+00 Axis=8.58e-02 | eigL2=1.672e-01 axis=0.886 | lr=2.00e-04 
+[031] steps=7750 train=6.0484e+00 | val=7.8975e+00 (del=1.28e-02) | L=4.58e+00 E=6.32e+00 Dyn=2.44e+00 Axis=8.44e-02 | eigL2=1.633e-01 axis=0.888 | lr=2.00e-04 
+[032] steps=8000 train=5.9524e+00 | val=8.0650e+00 (del=-2.12e-02) | L=4.03e+00 E=7.24e+00 Dyn=2.42e+00 Axis=8.04e-02 | eigL2=1.680e-01 axis=0.883 | lr=2.00e-04 
+[033] steps=8250 train=5.8993e+00 | val=8.0085e+00 (del=7.01e-03) | L=4.55e+00 E=6.79e+00 Dyn=2.33e+00 Axis=8.18e-02 | eigL2=1.596e-01 axis=0.890 | lr=2.00e-04 
+[034] steps=8500 train=5.8084e+00 | val=7.8756e+00 (del=1.66e-02) | L=4.14e+00 E=6.98e+00 Dyn=2.31e+00 Axis=8.08e-02 | eigL2=1.660e-01 axis=0.883 | lr=2.00e-04 
+[035] steps=8750 train=5.7699e+00 | val=7.8507e+00 (del=3.16e-03) | L=4.08e+00 E=7.10e+00 Dyn=2.25e+00 Axis=8.12e-02 | eigL2=1.663e-01 axis=0.884 | lr=2.00e-04 
+[036] steps=9000 train=5.6342e+00 | val=8.0225e+00 (del=-2.19e-02) | L=4.06e+00 E=7.52e+00 Dyn=2.23e+00 Axis=8.20e-02 | eigL2=1.709e-01 axis=0.887 | lr=2.00e-04 
+[037] steps=9250 train=5.6184e+00 | val=7.9492e+00 (del=9.14e-03) | L=4.40e+00 E=6.99e+00 Dyn=2.25e+00 Axis=8.12e-02 | eigL2=1.628e-01 axis=0.889 | lr=2.00e-04 
+[038] steps=9500 train=5.5500e+00 | val=7.9395e+00 (del=1.22e-03) | L=4.11e+00 E=7.61e+00 Dyn=2.07e+00 Axis=7.92e-02 | eigL2=1.655e-01 axis=0.884 | lr=2.00e-04 
+[039] steps=9750 train=5.5328e+00 | val=8.1259e+00 (del=-2.35e-02) | L=4.34e+00 E=7.47e+00 Dyn=2.21e+00 Axis=8.24e-02 | eigL2=1.654e-01 axis=0.888 | lr=1.00e-04 
+[040] steps=10000 train=5.1445e+00 | val=7.7896e+00 (del=4.14e-02) | L=4.22e+00 E=7.22e+00 Dyn=2.06e+00 Axis=7.96e-02 | eigL2=1.654e-01 axis=0.888 | lr=1.00e-04 
+[041] steps=10250 train=5.0270e+00 | val=7.9293e+00 (del=-1.79e-02) | L=3.96e+00 E=7.75e+00 Dyn=2.07e+00 Axis=7.94e-02 | eigL2=1.662e-01 axis=0.883 | lr=1.00e-04 
+[042] steps=10500 train=4.9480e+00 | val=7.9449e+00 (del=-1.97e-03) | L=4.05e+00 E=7.73e+00 Dyn=2.05e+00 Axis=7.92e-02 | eigL2=1.659e-01 axis=0.886 | lr=1.00e-04 
+[043] steps=10750 train=4.9417e+00 | val=7.7524e+00 (del=2.42e-02) | L=4.04e+00 E=7.45e+00 Dyn=2.00e+00 Axis=7.95e-02 | eigL2=1.644e-01 axis=0.889 | lr=1.00e-04 
+[044] steps=11000 train=4.8705e+00 | val=7.9737e+00 (del=-2.85e-02) | L=4.00e+00 E=7.93e+00 Dyn=2.00e+00 Axis=7.97e-02 | eigL2=1.642e-01 axis=0.886 | lr=1.00e-04 
+[045] steps=11250 train=4.8040e+00 | val=8.2488e+00 (del=-3.45e-02) | L=4.08e+00 E=8.41e+00 Dyn=2.00e+00 Axis=7.92e-02 | eigL2=1.638e-01 axis=0.884 | lr=1.00e-04 
+[046] steps=11500 train=4.8090e+00 | val=7.9735e+00 (del=3.34e-02) | L=4.05e+00 E=8.00e+00 Dyn=1.94e+00 Axis=7.86e-02 | eigL2=1.640e-01 axis=0.888 | lr=1.00e-04 
+[047] steps=11750 train=4.7390e+00 | val=8.0744e+00 (del=-1.27e-02) | L=4.06e+00 E=8.24e+00 Dyn=1.92e+00 Axis=7.92e-02 | eigL2=1.649e-01 axis=0.886 | lr=5.00e-05 
+[048] steps=12000 train=4.5681e+00 | val=8.1344e+00 (del=-7.43e-03) | L=3.96e+00 E=8.41e+00 Dyn=1.94e+00 Axis=7.63e-02 | eigL2=1.656e-01 axis=0.886 | lr=5.00e-05 
+[049] steps=12250 train=4.5113e+00 | val=8.2595e+00 (del=-1.54e-02) | L=3.95e+00 E=8.66e+00 Dyn=1.95e+00 Axis=7.73e-02 | eigL2=1.659e-01 axis=0.886 | lr=5.00e-05 
+[050] steps=12500 train=4.4992e+00 | val=8.2361e+00 (del=2.84e-03) | L=3.97e+00 E=8.63e+00 Dyn=1.93e+00 Axis=7.77e-02 | eigL2=1.647e-01 axis=0.886 | lr=5.00e-05 
+[051] steps=12750 train=4.4661e+00 | val=7.9130e+00 (del=3.92e-02) | L=4.19e+00 E=7.90e+00 Dyn=1.86e+00 Axis=7.88e-02 | eigL2=1.617e-01 axis=0.887 | lr=2.50e-05 
+[052] steps=13000 train=4.4101e+00 | val=7.9760e+00 (del=-7.96e-03) | L=4.01e+00 E=8.19e+00 Dyn=1.87e+00 Axis=7.81e-02 | eigL2=1.637e-01 axis=0.887 | lr=2.50e-05 
+[053] steps=13250 train=4.3667e+00 | val=8.0322e+00 (del=-7.04e-03) | L=3.93e+00 E=8.35e+00 Dyn=1.88e+00 Axis=7.76e-02 | eigL2=1.658e-01 axis=0.886 | lr=2.50e-05 
+[054] steps=13500 train=4.3603e+00 | val=8.0163e+00 (del=1.97e-03) | L=3.98e+00 E=8.27e+00 Dyn=1.88e+00 Axis=7.76e-02 | eigL2=1.635e-01 axis=0.885 | lr=2.50e-05 
+[055] steps=13750 train=4.3414e+00 | val=8.0374e+00 (del=-2.62e-03) | L=3.97e+00 E=8.33e+00 Dyn=1.88e+00 Axis=7.74e-02 | eigL2=1.645e-01 axis=0.885 | lr=1.25e-05 
+[056] steps=14000 train=4.3129e+00 | val=8.0049e+00 (del=4.04e-03) | L=3.97e+00 E=8.27e+00 Dyn=1.88e+00 Axis=7.75e-02 | eigL2=1.646e-01 axis=0.883 | lr=1.25e-05 
+[057] steps=14250 train=4.3048e+00 | val=8.0532e+00 (del=-6.03e-03) | L=3.97e+00 E=8.35e+00 Dyn=1.89e+00 Axis=7.73e-02 | eigL2=1.641e-01 axis=0.886 | lr=1.25e-05 
+[058] steps=14500 train=4.2733e+00 | val=8.1122e+00 (del=-7.33e-03) | L=3.96e+00 E=8.51e+00 Dyn=1.87e+00 Axis=7.70e-02 | eigL2=1.648e-01 axis=0.886 | lr=1.25e-05 
+[059] steps=14750 train=4.2933e+00 | val=8.1367e+00 (del=-3.03e-03) | L=3.95e+00 E=8.55e+00 Dyn=1.88e+00 Axis=7.68e-02 | eigL2=1.637e-01 axis=0.887 | lr=6.25e-06 
+[060] steps=15000 train=4.2539e+00 | val=8.1198e+00 (del=2.08e-03) | L=3.97e+00 E=8.52e+00 Dyn=1.87e+00 Axis=7.73e-02 | eigL2=1.639e-01 axis=0.886 | lr=6.25e-06 
+[061] steps=15250 train=4.2421e+00 | val=8.0615e+00 (del=7.18e-03) | L=3.96e+00 E=8.42e+00 Dyn=1.86e+00 Axis=7.71e-02 | eigL2=1.640e-01 axis=0.886 | lr=6.25e-06 
+[062] steps=15500 train=4.2512e+00 | val=8.0590e+00 (del=3.11e-04) | L=3.97e+00 E=8.42e+00 Dyn=1.86e+00 Axis=7.66e-02 | eigL2=1.637e-01 axis=0.887 | lr=6.25e-06 
+[063] steps=15750 train=4.2468e+00 | val=8.0619e+00 (del=-3.55e-04) | L=3.94e+00 E=8.45e+00 Dyn=1.86e+00 Axis=7.72e-02 | eigL2=1.648e-01 axis=0.887 | lr=3.13e-06 
+[064] steps=16000 train=4.2474e+00 | val=8.0673e+00 (del=-6.75e-04) | L=3.96e+00 E=8.44e+00 Dyn=1.86e+00 Axis=7.67e-02 | eigL2=1.637e-01 axis=0.886 | lr=3.13e-06 
+[065] steps=16250 train=4.2265e+00 | val=8.0669e+00 (del=5.47e-05) | L=3.96e+00 E=8.45e+00 Dyn=1.86e+00 Axis=7.67e-02 | eigL2=1.639e-01 axis=0.886 | lr=3.13e-06 
+[066] steps=16500 train=4.2209e+00 | val=8.0699e+00 (del=-3.77e-04) | L=3.96e+00 E=8.46e+00 Dyn=1.86e+00 Axis=7.70e-02 | eigL2=1.640e-01 axis=0.886 | lr=3.13e-06 
+[067] steps=16750 train=4.2179e+00 | val=8.0584e+00 (del=1.43e-03) | L=3.97e+00 E=8.42e+00 Dyn=1.86e+00 Axis=7.70e-02 | eigL2=1.638e-01 axis=0.886 | lr=1.56e-06 
+[068] steps=17000 train=4.2362e+00 | val=8.0628e+00 (del=-5.52e-04) | L=3.96e+00 E=8.44e+00 Dyn=1.86e+00 Axis=7.69e-02 | eigL2=1.639e-01 axis=0.886 | lr=1.56e-06 
+[069] steps=17250 train=4.2101e+00 | val=8.0580e+00 (del=5.91e-04) | L=3.96e+00 E=8.43e+00 Dyn=1.85e+00 Axis=7.68e-02 | eigL2=1.639e-01 axis=0.886 | lr=1.56e-06 
+[070] steps=17500 train=4.2176e+00 | val=8.0622e+00 (del=-5.18e-04) | L=3.96e+00 E=8.44e+00 Dyn=1.85e+00 Axis=7.69e-02 | eigL2=1.638e-01 axis=0.886 | lr=1.56e-06 
+[071] steps=17750 train=4.2202e+00 | val=8.0654e+00 (del=-3.97e-04) | L=3.97e+00 E=8.44e+00 Dyn=1.85e+00 Axis=7.69e-02 | eigL2=1.637e-01 axis=0.886 | lr=7.81e-07 
+[072] steps=18000 train=4.2121e+00 | val=8.0649e+00 (del=5.81e-05) | L=3.97e+00 E=8.44e+00 Dyn=1.85e+00 Axis=7.69e-02 | eigL2=1.637e-01 axis=0.885 | lr=7.81e-07 
+[073] steps=18250 train=4.2189e+00 | val=8.0657e+00 (del=-9.87e-05) | L=3.97e+00 E=8.44e+00 Dyn=1.85e+00 Axis=7.69e-02 | eigL2=1.637e-01 axis=0.885 | lr=7.81e-07 
+[074] steps=18500 train=4.2027e+00 | val=8.0633e+00 (del=2.97e-04) | L=3.97e+00 E=8.44e+00 Dyn=1.85e+00 Axis=7.69e-02 | eigL2=1.637e-01 axis=0.885 | lr=7.81e-07 
+Early stop at epoch 74 (best @ 43, best_val=7.752e+00).
+Validation of model: bilstm
+Pred I (trace=1):
+ [[ 0.3748 -0.0008 -0.0893]
+ [-0.0008  0.4316 -0.0234]
+ [-0.0893 -0.0234  0.1936]]
+True I (trace=1):
+ [[ 0.3797 -0.0024 -0.0709]
+ [-0.0024  0.4057 -0.0065]
+ [-0.0709 -0.0065  0.2145]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.155203 0.408771 0.436026]
+eigs_true: [0.188065 0.405968 0.405968]
+eigs_unscaled: [1.135114 2.450324 2.450324]
+abs_err  : [0.032862 0.002804 0.030058]
+rel_err  : [0.174738 0.006907 0.074041]
+axis |cos|: [0.99835  0.952687 0.951609]   mean= 0.9675
+frame misalignment: 17.951 deg  (0.3133 rad)
+axis match (pred i -> true j): [0, 2, 1]
+
+==========================================================================================
+Total parameters: 54848
+Total memory (bytes): 219392
+Total memory (MB): 0.209228515625
+==========================================================================================
+mean(E_pred)/mean(E_true) = 0.9285699
+|U_p^T U_t| (axis cosines):
+ [[0.99834955 0.04792928 0.03163832]
+ [0.01561829 0.30355048 0.9526874 ]
+ [0.05526547 0.95160913 0.30230087]]
+training mamba
+[001] steps=250 train=1.4928e+01 | val=1.2223e+01 (del=inf) | L=6.78e+00 E=4.45e+00 Dyn=6.59e+00 Axis=1.12e-01 | eigL2=1.784e-01 axis=0.849 | lr=2.00e-04 
+[002] steps=500 train=1.2021e+01 | val=1.2124e+01 (del=8.11e-03) | L=6.52e+00 E=4.13e+00 Dyn=6.79e+00 Axis=1.11e-01 | eigL2=1.811e-01 axis=0.860 | lr=2.00e-04 
+[003] steps=750 train=1.1769e+01 | val=1.1915e+01 (del=1.72e-02) | L=6.27e+00 E=3.91e+00 Dyn=6.81e+00 Axis=1.09e-01 | eigL2=1.797e-01 axis=0.865 | lr=2.00e-04 
+[004] steps=1000 train=1.1703e+01 | val=1.2658e+01 (del=-6.23e-02) | L=6.00e+00 E=5.02e+00 Dyn=7.14e+00 Axis=1.08e-01 | eigL2=1.787e-01 axis=0.867 | lr=2.00e-04 
+[005] steps=1250 train=1.1626e+01 | val=1.1846e+01 (del=6.42e-02) | L=6.09e+00 E=4.12e+00 Dyn=6.73e+00 Axis=1.09e-01 | eigL2=1.799e-01 axis=0.871 | lr=2.00e-04 
+[006] steps=1500 train=1.1410e+01 | val=1.1702e+01 (del=1.21e-02) | L=5.77e+00 E=4.39e+00 Dyn=6.61e+00 Axis=1.08e-01 | eigL2=1.829e-01 axis=0.868 | lr=2.00e-04 
+[007] steps=1750 train=1.0984e+01 | val=1.1275e+01 (del=3.65e-02) | L=5.39e+00 E=4.37e+00 Dyn=6.39e+00 Axis=1.06e-01 | eigL2=1.836e-01 axis=0.874 | lr=2.00e-04 
+[008] steps=2000 train=1.0480e+01 | val=1.0806e+01 (del=4.16e-02) | L=5.06e+00 E=5.00e+00 Dyn=5.77e+00 Axis=1.03e-01 | eigL2=1.823e-01 axis=0.872 | lr=2.00e-04 
+[009] steps=2250 train=9.9782e+00 | val=1.0386e+01 (del=3.89e-02) | L=4.20e+00 E=5.93e+00 Dyn=5.31e+00 Axis=9.54e-02 | eigL2=1.836e-01 axis=0.869 | lr=2.00e-04 
+[010] steps=2500 train=9.4725e+00 | val=1.0565e+01 (del=-1.72e-02) | L=4.88e+00 E=6.65e+00 Dyn=4.79e+00 Axis=9.87e-02 | eigL2=1.761e-01 axis=0.862 | lr=2.00e-04 
+[011] steps=2750 train=9.2117e+00 | val=9.1779e+00 (del=1.31e-01) | L=4.55e+00 E=5.66e+00 Dyn=4.06e+00 Axis=9.40e-02 | eigL2=1.771e-01 axis=0.876 | lr=2.00e-04 
+[012] steps=3000 train=8.8089e+00 | val=8.9798e+00 (del=2.16e-02) | L=4.54e+00 E=6.12e+00 Dyn=3.64e+00 Axis=9.15e-02 | eigL2=1.726e-01 axis=0.870 | lr=2.00e-04 
+[013] steps=3250 train=8.5595e+00 | val=9.5128e+00 (del=-5.94e-02) | L=4.08e+00 E=7.58e+00 Dyn=3.67e+00 Axis=8.84e-02 | eigL2=1.762e-01 axis=0.872 | lr=2.00e-04 
+[014] steps=3500 train=8.2289e+00 | val=8.5628e+00 (del=9.99e-02) | L=4.16e+00 E=6.37e+00 Dyn=3.29e+00 Axis=8.64e-02 | eigL2=1.682e-01 axis=0.881 | lr=2.00e-04 
+[015] steps=3750 train=7.9973e+00 | val=8.2541e+00 (del=3.60e-02) | L=4.07e+00 E=6.39e+00 Dyn=3.01e+00 Axis=8.32e-02 | eigL2=1.687e-01 axis=0.878 | lr=2.00e-04 
+[016] steps=4000 train=7.7993e+00 | val=8.0193e+00 (del=2.84e-02) | L=4.27e+00 E=6.43e+00 Dyn=2.66e+00 Axis=8.31e-02 | eigL2=1.605e-01 axis=0.884 | lr=2.00e-04 
+[017] steps=4250 train=7.5321e+00 | val=7.8670e+00 (del=1.90e-02) | L=4.01e+00 E=6.26e+00 Dyn=2.72e+00 Axis=8.10e-02 | eigL2=1.642e-01 axis=0.882 | lr=2.00e-04 
+[018] steps=4500 train=7.3734e+00 | val=8.4222e+00 (del=-7.06e-02) | L=4.28e+00 E=7.63e+00 Dyn=2.46e+00 Axis=8.10e-02 | eigL2=1.618e-01 axis=0.882 | lr=2.00e-04 
+[019] steps=4750 train=7.3187e+00 | val=7.3949e+00 (del=1.22e-01) | L=4.15e+00 E=6.06e+00 Dyn=2.28e+00 Axis=7.78e-02 | eigL2=1.585e-01 axis=0.891 | lr=2.00e-04 
+[020] steps=5000 train=7.2088e+00 | val=8.1841e+00 (del=-1.07e-01) | L=4.18e+00 E=7.64e+00 Dyn=2.27e+00 Axis=7.87e-02 | eigL2=1.571e-01 axis=0.886 | lr=2.00e-04 
+[021] steps=5250 train=7.0204e+00 | val=7.0119e+00 (del=1.43e-01) | L=4.04e+00 E=5.46e+00 Dyn=2.25e+00 Axis=7.75e-02 | eigL2=1.565e-01 axis=0.883 | lr=2.00e-04 
+[022] steps=5500 train=6.7884e+00 | val=6.7891e+00 (del=3.18e-02) | L=3.54e+00 E=5.31e+00 Dyn=2.35e+00 Axis=7.49e-02 | eigL2=1.660e-01 axis=0.888 | lr=2.00e-04 
+[023] steps=5750 train=6.6488e+00 | val=6.7918e+00 (del=-4.00e-04) | L=3.76e+00 E=5.41e+00 Dyn=2.20e+00 Axis=7.72e-02 | eigL2=1.630e-01 axis=0.890 | lr=2.00e-04 
+[024] steps=6000 train=6.6192e+00 | val=8.2506e+00 (del=-2.15e-01) | L=3.74e+00 E=8.20e+00 Dyn=2.27e+00 Axis=7.72e-02 | eigL2=1.630e-01 axis=0.881 | lr=2.00e-04 
+[025] steps=6250 train=6.5696e+00 | val=7.1179e+00 (del=1.37e-01) | L=4.15e+00 E=5.72e+00 Dyn=2.18e+00 Axis=7.63e-02 | eigL2=1.559e-01 axis=0.886 | lr=2.00e-04 
+[026] steps=6500 train=6.5265e+00 | val=7.0200e+00 (del=1.38e-02) | L=3.62e+00 E=6.30e+00 Dyn=2.05e+00 Axis=7.36e-02 | eigL2=1.616e-01 axis=0.889 | lr=1.00e-04 
+[027] steps=6750 train=5.8693e+00 | val=6.6868e+00 (del=4.75e-02) | L=3.88e+00 E=5.82e+00 Dyn=1.83e+00 Axis=7.33e-02 | eigL2=1.564e-01 axis=0.893 | lr=1.00e-04 
+[028] steps=7000 train=5.7962e+00 | val=6.8394e+00 (del=-2.28e-02) | L=3.81e+00 E=6.13e+00 Dyn=1.86e+00 Axis=7.19e-02 | eigL2=1.560e-01 axis=0.884 | lr=1.00e-04 
+[029] steps=7250 train=5.6815e+00 | val=6.5312e+00 (del=4.51e-02) | L=3.90e+00 E=5.66e+00 Dyn=1.74e+00 Axis=7.29e-02 | eigL2=1.546e-01 axis=0.892 | lr=1.00e-04 
+[030] steps=7500 train=5.6007e+00 | val=6.2246e+00 (del=4.69e-02) | L=3.52e+00 E=5.54e+00 Dyn=1.69e+00 Axis=7.13e-02 | eigL2=1.602e-01 axis=0.892 | lr=1.00e-04 
+[031] steps=7750 train=5.5734e+00 | val=6.1488e+00 (del=1.22e-02) | L=3.90e+00 E=4.97e+00 Dyn=1.71e+00 Axis=7.07e-02 | eigL2=1.534e-01 axis=0.883 | lr=1.00e-04 
+[032] steps=8000 train=5.4781e+00 | val=6.1957e+00 (del=-7.63e-03) | L=3.72e+00 E=5.26e+00 Dyn=1.70e+00 Axis=7.09e-02 | eigL2=1.575e-01 axis=0.888 | lr=1.00e-04 
+[033] steps=8250 train=5.4643e+00 | val=5.9695e+00 (del=3.65e-02) | L=3.63e+00 E=5.07e+00 Dyn=1.62e+00 Axis=6.92e-02 | eigL2=1.567e-01 axis=0.891 | lr=1.00e-04 
+[034] steps=8500 train=5.3902e+00 | val=5.9126e+00 (del=9.53e-03) | L=3.54e+00 E=4.87e+00 Dyn=1.70e+00 Axis=6.97e-02 | eigL2=1.570e-01 axis=0.893 | lr=1.00e-04 
+[035] steps=8750 train=5.2803e+00 | val=6.2741e+00 (del=-6.11e-02) | L=3.50e+00 E=5.74e+00 Dyn=1.64e+00 Axis=7.11e-02 | eigL2=1.599e-01 axis=0.893 | lr=1.00e-04 
+[036] steps=9000 train=5.2906e+00 | val=6.0061e+00 (del=4.27e-02) | L=3.50e+00 E=5.32e+00 Dyn=1.59e+00 Axis=6.83e-02 | eigL2=1.598e-01 axis=0.887 | lr=1.00e-04 
+[037] steps=9250 train=5.2262e+00 | val=5.7963e+00 (del=3.49e-02) | L=3.64e+00 E=4.80e+00 Dyn=1.57e+00 Axis=6.87e-02 | eigL2=1.569e-01 axis=0.894 | lr=1.00e-04 
+[038] steps=9500 train=5.1411e+00 | val=5.8410e+00 (del=-7.72e-03) | L=3.69e+00 E=4.88e+00 Dyn=1.55e+00 Axis=7.01e-02 | eigL2=1.544e-01 axis=0.892 | lr=1.00e-04 
+[039] steps=9750 train=5.1313e+00 | val=5.8033e+00 (del=6.46e-03) | L=3.54e+00 E=5.00e+00 Dyn=1.52e+00 Axis=6.79e-02 | eigL2=1.557e-01 axis=0.893 | lr=1.00e-04 
+[040] steps=10000 train=5.0768e+00 | val=5.8974e+00 (del=-1.62e-02) | L=3.44e+00 E=5.15e+00 Dyn=1.59e+00 Axis=7.01e-02 | eigL2=1.611e-01 axis=0.890 | lr=1.00e-04 
+[041] steps=10250 train=5.0233e+00 | val=5.9082e+00 (del=-1.83e-03) | L=3.53e+00 E=5.30e+00 Dyn=1.48e+00 Axis=6.83e-02 | eigL2=1.563e-01 axis=0.894 | lr=5.00e-05 
+[042] steps=10500 train=4.7783e+00 | val=5.5059e+00 (del=6.81e-02) | L=3.47e+00 E=4.63e+00 Dyn=1.45e+00 Axis=6.72e-02 | eigL2=1.567e-01 axis=0.897 | lr=5.00e-05 
+[043] steps=10750 train=4.7189e+00 | val=5.5549e+00 (del=-8.90e-03) | L=3.51e+00 E=4.74e+00 Dyn=1.42e+00 Axis=6.71e-02 | eigL2=1.557e-01 axis=0.892 | lr=5.00e-05 
+[044] steps=11000 train=4.6667e+00 | val=5.5602e+00 (del=-9.63e-04) | L=3.45e+00 E=4.78e+00 Dyn=1.44e+00 Axis=6.76e-02 | eigL2=1.579e-01 axis=0.891 | lr=5.00e-05 
+[045] steps=11250 train=4.6345e+00 | val=5.5759e+00 (del=-2.83e-03) | L=3.44e+00 E=4.83e+00 Dyn=1.43e+00 Axis=6.66e-02 | eigL2=1.584e-01 axis=0.894 | lr=5.00e-05 
+[046] steps=11500 train=4.6048e+00 | val=5.6489e+00 (del=-1.31e-02) | L=3.42e+00 E=5.05e+00 Dyn=1.41e+00 Axis=6.74e-02 | eigL2=1.591e-01 axis=0.892 | lr=2.50e-05 
+[047] steps=11750 train=4.4993e+00 | val=5.5120e+00 (del=2.42e-02) | L=3.47e+00 E=4.78e+00 Dyn=1.38e+00 Axis=6.70e-02 | eigL2=1.567e-01 axis=0.892 | lr=2.50e-05 
+[048] steps=12000 train=4.4565e+00 | val=5.4072e+00 (del=1.90e-02) | L=3.43e+00 E=4.65e+00 Dyn=1.36e+00 Axis=6.67e-02 | eigL2=1.568e-01 axis=0.891 | lr=2.50e-05 
+[049] steps=12250 train=4.4367e+00 | val=5.5444e+00 (del=-2.54e-02) | L=3.52e+00 E=4.87e+00 Dyn=1.34e+00 Axis=6.67e-02 | eigL2=1.566e-01 axis=0.891 | lr=2.50e-05 
+[050] steps=12500 train=4.4051e+00 | val=5.5407e+00 (del=6.62e-04) | L=3.39e+00 E=4.94e+00 Dyn=1.37e+00 Axis=6.59e-02 | eigL2=1.580e-01 axis=0.894 | lr=2.50e-05 
+[051] steps=12750 train=4.4038e+00 | val=5.4299e+00 (del=2.00e-02) | L=3.46e+00 E=4.74e+00 Dyn=1.32e+00 Axis=6.64e-02 | eigL2=1.563e-01 axis=0.892 | lr=2.50e-05 
+[052] steps=13000 train=4.4001e+00 | val=5.4895e+00 (del=-1.10e-02) | L=3.46e+00 E=4.82e+00 Dyn=1.34e+00 Axis=6.62e-02 | eigL2=1.559e-01 axis=0.891 | lr=1.25e-05 
+[053] steps=13250 train=4.3108e+00 | val=5.5162e+00 (del=-4.87e-03) | L=3.44e+00 E=4.93e+00 Dyn=1.33e+00 Axis=6.56e-02 | eigL2=1.564e-01 axis=0.892 | lr=1.25e-05 
+[054] steps=13500 train=4.3193e+00 | val=5.5006e+00 (del=2.83e-03) | L=3.43e+00 E=4.92e+00 Dyn=1.32e+00 Axis=6.64e-02 | eigL2=1.569e-01 axis=0.895 | lr=1.25e-05 
+[055] steps=13750 train=4.3063e+00 | val=5.4910e+00 (del=1.76e-03) | L=3.44e+00 E=4.89e+00 Dyn=1.32e+00 Axis=6.62e-02 | eigL2=1.561e-01 axis=0.893 | lr=1.25e-05 
+[056] steps=14000 train=4.2921e+00 | val=5.5043e+00 (del=-2.42e-03) | L=3.44e+00 E=4.95e+00 Dyn=1.30e+00 Axis=6.56e-02 | eigL2=1.562e-01 axis=0.894 | lr=6.25e-06 
+[057] steps=14250 train=4.2698e+00 | val=5.4618e+00 (del=7.72e-03) | L=3.44e+00 E=4.86e+00 Dyn=1.30e+00 Axis=6.54e-02 | eigL2=1.561e-01 axis=0.895 | lr=6.25e-06 
+[058] steps=14500 train=4.2438e+00 | val=5.4428e+00 (del=3.48e-03) | L=3.45e+00 E=4.83e+00 Dyn=1.30e+00 Axis=6.56e-02 | eigL2=1.559e-01 axis=0.894 | lr=6.25e-06 
+[059] steps=14750 train=4.2474e+00 | val=5.4450e+00 (del=-4.17e-04) | L=3.44e+00 E=4.84e+00 Dyn=1.30e+00 Axis=6.59e-02 | eigL2=1.561e-01 axis=0.896 | lr=6.25e-06 
+[060] steps=15000 train=4.2533e+00 | val=5.4672e+00 (del=-4.08e-03) | L=3.43e+00 E=4.90e+00 Dyn=1.29e+00 Axis=6.57e-02 | eigL2=1.563e-01 axis=0.894 | lr=3.13e-06 
+[061] steps=15250 train=4.2215e+00 | val=5.4713e+00 (del=-7.37e-04) | L=3.44e+00 E=4.90e+00 Dyn=1.29e+00 Axis=6.57e-02 | eigL2=1.563e-01 axis=0.895 | lr=3.13e-06 
+[062] steps=15500 train=4.2274e+00 | val=5.4602e+00 (del=2.01e-03) | L=3.44e+00 E=4.89e+00 Dyn=1.29e+00 Axis=6.56e-02 | eigL2=1.562e-01 axis=0.895 | lr=3.13e-06 
+[063] steps=15750 train=4.2225e+00 | val=5.4585e+00 (del=3.26e-04) | L=3.44e+00 E=4.88e+00 Dyn=1.29e+00 Axis=6.56e-02 | eigL2=1.562e-01 axis=0.895 | lr=3.13e-06 
+[064] steps=16000 train=4.2218e+00 | val=5.4521e+00 (del=1.16e-03) | L=3.44e+00 E=4.87e+00 Dyn=1.29e+00 Axis=6.57e-02 | eigL2=1.561e-01 axis=0.895 | lr=1.56e-06 
+[065] steps=16250 train=4.2099e+00 | val=5.4554e+00 (del=-6.05e-04) | L=3.45e+00 E=4.88e+00 Dyn=1.29e+00 Axis=6.57e-02 | eigL2=1.561e-01 axis=0.894 | lr=1.56e-06 
+[066] steps=16500 train=4.2077e+00 | val=5.4554e+00 (del=-1.60e-06) | L=3.44e+00 E=4.88e+00 Dyn=1.29e+00 Axis=6.57e-02 | eigL2=1.563e-01 axis=0.895 | lr=1.56e-06 
+[067] steps=16750 train=4.2070e+00 | val=5.4588e+00 (del=-6.22e-04) | L=3.44e+00 E=4.89e+00 Dyn=1.29e+00 Axis=6.56e-02 | eigL2=1.561e-01 axis=0.895 | lr=1.56e-06 
+[068] steps=17000 train=4.2059e+00 | val=5.4589e+00 (del=-1.65e-05) | L=3.44e+00 E=4.89e+00 Dyn=1.29e+00 Axis=6.56e-02 | eigL2=1.561e-01 axis=0.896 | lr=7.81e-07 
+[069] steps=17250 train=4.2026e+00 | val=5.4570e+00 (del=3.49e-04) | L=3.44e+00 E=4.89e+00 Dyn=1.29e+00 Axis=6.57e-02 | eigL2=1.561e-01 axis=0.895 | lr=7.81e-07 
+[070] steps=17500 train=4.1988e+00 | val=5.4554e+00 (del=2.98e-04) | L=3.44e+00 E=4.89e+00 Dyn=1.29e+00 Axis=6.57e-02 | eigL2=1.561e-01 axis=0.895 | lr=7.81e-07 
+[071] steps=17750 train=4.1994e+00 | val=5.4601e+00 (del=-8.64e-04) | L=3.44e+00 E=4.89e+00 Dyn=1.29e+00 Axis=6.57e-02 | eigL2=1.562e-01 axis=0.895 | lr=7.81e-07 
+Early stop at epoch 71 (best @ 48, best_val=5.407e+00).
+Validation of model: mamba
+Pred I (trace=1):
+ [[ 0.4024 -0.0062 -0.0963]
+ [-0.0062  0.4378 -0.0128]
+ [-0.0963 -0.0128  0.1597]]
+True I (trace=1):
+ [[ 0.3797 -0.0024 -0.0709]
+ [-0.0024  0.4057 -0.0065]
+ [-0.0709 -0.0065  0.2145]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.125538 0.435155 0.439306]
+eigs_true: [0.188065 0.405968 0.405968]
+eigs_unscaled: [1.135114 2.450324 2.450324]
+abs_err  : [0.062527 0.029188 0.033339]
+rel_err  : [0.332475 0.071897 0.082122]
+axis |cos|: [0.99973  0.890987 0.890955]   mean= 0.9272
+frame misalignment: 27.022 deg  (0.4716 rad)
+axis match (pred i -> true j): [0, 2, 1]
+
+==========================================================================================
+Total parameters: 48518
+Total memory (bytes): 194072
+Total memory (MB): 0.18508148193359375
+==========================================================================================
+mean(E_pred)/mean(E_true) = 0.86443603
+|U_p^T U_t| (axis cosines):
+ [[0.99973035 0.01326905 0.01905629]
+ [0.01095907 0.45389742 0.89098656]
+ [0.02047213 0.8909552  0.4536296 ]]
+training transformer
+[001] steps=250 train=1.5938e+01 | val=1.3084e+01 (del=inf) | L=6.25e+00 E=5.74e+00 Dyn=7.08e+00 Axis=1.10e-01 | eigL2=1.763e-01 axis=0.859 | lr=2.00e-04 
+[002] steps=500 train=1.2225e+01 | val=1.2919e+01 (del=1.26e-02) | L=5.84e+00 E=5.62e+00 Dyn=7.18e+00 Axis=1.07e-01 | eigL2=1.770e-01 axis=0.869 | lr=2.00e-04 
+[003] steps=750 train=1.1744e+01 | val=1.2469e+01 (del=3.48e-02) | L=6.54e+00 E=4.63e+00 Dyn=6.87e+00 Axis=1.11e-01 | eigL2=1.764e-01 axis=0.882 | lr=2.00e-04 
+[004] steps=1000 train=1.1583e+01 | val=1.2320e+01 (del=1.19e-02) | L=5.90e+00 E=4.70e+00 Dyn=7.01e+00 Axis=1.09e-01 | eigL2=1.791e-01 axis=0.868 | lr=2.00e-04 
+[005] steps=1250 train=1.1179e+01 | val=1.2041e+01 (del=2.27e-02) | L=5.42e+00 E=4.70e+00 Dyn=6.97e+00 Axis=1.06e-01 | eigL2=1.840e-01 axis=0.882 | lr=2.00e-04 
+[006] steps=1500 train=1.1045e+01 | val=1.1276e+01 (del=6.35e-02) | L=5.16e+00 E=3.38e+00 Dyn=7.00e+00 Axis=1.06e-01 | eigL2=1.918e-01 axis=0.900 | lr=2.00e-04 
+[007] steps=1750 train=1.0902e+01 | val=1.1041e+01 (del=2.09e-02) | L=5.25e+00 E=3.48e+00 Dyn=6.67e+00 Axis=1.08e-01 | eigL2=1.954e-01 axis=0.885 | lr=2.00e-04 
+[008] steps=2000 train=1.0576e+01 | val=1.1124e+01 (del=-7.50e-03) | L=4.98e+00 E=3.48e+00 Dyn=6.88e+00 Axis=1.09e-01 | eigL2=2.086e-01 axis=0.886 | lr=2.00e-04 
+[009] steps=2250 train=1.0332e+01 | val=1.1231e+01 (del=-9.60e-03) | L=4.94e+00 E=4.08e+00 Dyn=6.71e+00 Axis=1.11e-01 | eigL2=2.161e-01 axis=0.879 | lr=2.00e-04 
+[010] steps=2500 train=1.0268e+01 | val=1.0845e+01 (del=3.44e-02) | L=4.74e+00 E=3.59e+00 Dyn=6.67e+00 Axis=1.15e-01 | eigL2=2.266e-01 axis=0.889 | lr=2.00e-04 
+[011] steps=2750 train=1.0178e+01 | val=1.1106e+01 (del=-2.41e-02) | L=4.63e+00 E=3.76e+00 Dyn=6.90e+00 Axis=1.25e-01 | eigL2=2.292e-01 axis=0.896 | lr=2.00e-04 
+[012] steps=3000 train=1.0082e+01 | val=1.0880e+01 (del=2.04e-02) | L=4.55e+00 E=3.48e+00 Dyn=6.85e+00 Axis=1.25e-01 | eigL2=2.358e-01 axis=0.895 | lr=2.00e-04 
+[013] steps=3250 train=9.9842e+00 | val=1.0481e+01 (del=3.67e-02) | L=4.60e+00 E=3.15e+00 Dyn=6.59e+00 Axis=1.14e-01 | eigL2=2.318e-01 axis=0.891 | lr=2.00e-04 
+[014] steps=3500 train=9.8363e+00 | val=1.0418e+01 (del=6.03e-03) | L=4.42e+00 E=3.10e+00 Dyn=6.65e+00 Axis=1.23e-01 | eigL2=2.376e-01 axis=0.899 | lr=2.00e-04 
+[015] steps=3750 train=9.8284e+00 | val=1.0688e+01 (del=-2.60e-02) | L=4.43e+00 E=3.52e+00 Dyn=6.70e+00 Axis=1.26e-01 | eigL2=2.377e-01 axis=0.884 | lr=2.00e-04 
+[016] steps=4000 train=9.8295e+00 | val=1.0476e+01 (del=1.99e-02) | L=4.46e+00 E=3.28e+00 Dyn=6.60e+00 Axis=1.31e-01 | eigL2=2.388e-01 axis=0.892 | lr=2.00e-04 
+[017] steps=4250 train=9.7386e+00 | val=1.0450e+01 (del=2.42e-03) | L=4.26e+00 E=3.05e+00 Dyn=6.78e+00 Axis=1.49e-01 | eigL2=2.404e-01 axis=0.898 | lr=2.00e-04 
+[018] steps=4500 train=9.6863e+00 | val=1.0247e+01 (del=1.94e-02) | L=4.48e+00 E=2.95e+00 Dyn=6.52e+00 Axis=1.28e-01 | eigL2=2.418e-01 axis=0.892 | lr=2.00e-04 
+[019] steps=4750 train=9.6385e+00 | val=1.0334e+01 (del=-8.48e-03) | L=4.46e+00 E=3.05e+00 Dyn=6.57e+00 Axis=1.29e-01 | eigL2=2.397e-01 axis=0.890 | lr=2.00e-04 
+[020] steps=5000 train=9.6065e+00 | val=1.1283e+01 (del=-9.18e-02) | L=4.22e+00 E=4.89e+00 Dyn=6.72e+00 Axis=1.35e-01 | eigL2=2.392e-01 axis=0.880 | lr=2.00e-04 
+[021] steps=5250 train=9.6100e+00 | val=1.0494e+01 (del=6.99e-02) | L=4.21e+00 E=3.48e+00 Dyn=6.64e+00 Axis=1.39e-01 | eigL2=2.431e-01 axis=0.890 | lr=2.00e-04 
+[022] steps=5500 train=9.5421e+00 | val=1.0283e+01 (del=2.01e-02) | L=4.42e+00 E=3.09e+00 Dyn=6.52e+00 Axis=1.33e-01 | eigL2=2.427e-01 axis=0.886 | lr=1.00e-04 
+[023] steps=5750 train=9.2713e+00 | val=1.0228e+01 (del=5.39e-03) | L=4.25e+00 E=2.94e+00 Dyn=6.62e+00 Axis=1.33e-01 | eigL2=2.467e-01 axis=0.894 | lr=1.00e-04 
+[024] steps=6000 train=9.2127e+00 | val=1.0117e+01 (del=1.08e-02) | L=4.20e+00 E=2.85e+00 Dyn=6.58e+00 Axis=1.33e-01 | eigL2=2.483e-01 axis=0.897 | lr=1.00e-04 
+[025] steps=6250 train=9.1685e+00 | val=1.0116e+01 (del=1.38e-04) | L=4.28e+00 E=2.93e+00 Dyn=6.50e+00 Axis=1.32e-01 | eigL2=2.503e-01 axis=0.893 | lr=1.00e-04 
+[026] steps=6500 train=9.1473e+00 | val=1.0241e+01 (del=-1.24e-02) | L=4.32e+00 E=3.11e+00 Dyn=6.52e+00 Axis=1.34e-01 | eigL2=2.488e-01 axis=0.887 | lr=1.00e-04 
+[027] steps=6750 train=9.0826e+00 | val=1.0217e+01 (del=2.26e-03) | L=4.25e+00 E=3.11e+00 Dyn=6.53e+00 Axis=1.40e-01 | eigL2=2.522e-01 axis=0.888 | lr=1.00e-04 
+[028] steps=7000 train=9.0741e+00 | val=1.0178e+01 (del=3.89e-03) | L=4.23e+00 E=3.10e+00 Dyn=6.50e+00 Axis=1.22e-01 | eigL2=2.456e-01 axis=0.889 | lr=1.00e-04 
+[029] steps=7250 train=9.0584e+00 | val=1.0148e+01 (del=2.92e-03) | L=4.17e+00 E=3.15e+00 Dyn=6.47e+00 Axis=1.22e-01 | eigL2=2.510e-01 axis=0.887 | lr=5.00e-05 
+[030] steps=7500 train=8.9510e+00 | val=1.0038e+01 (del=1.09e-02) | L=4.19e+00 E=2.90e+00 Dyn=6.48e+00 Axis=1.36e-01 | eigL2=2.524e-01 axis=0.896 | lr=5.00e-05 
+[031] steps=7750 train=8.9158e+00 | val=1.0083e+01 (del=-4.53e-03) | L=4.18e+00 E=2.90e+00 Dyn=6.53e+00 Axis=1.34e-01 | eigL2=2.513e-01 axis=0.892 | lr=5.00e-05 
+[032] steps=8000 train=8.8848e+00 | val=1.0088e+01 (del=-4.61e-04) | L=4.11e+00 E=3.01e+00 Dyn=6.52e+00 Axis=1.28e-01 | eigL2=2.504e-01 axis=0.892 | lr=5.00e-05 
+[033] steps=8250 train=8.8846e+00 | val=9.9940e+00 (del=9.31e-03) | L=4.22e+00 E=2.97e+00 Dyn=6.39e+00 Axis=1.22e-01 | eigL2=2.521e-01 axis=0.890 | lr=5.00e-05 
+[034] steps=8500 train=8.8583e+00 | val=9.9961e+00 (del=-2.11e-04) | L=4.07e+00 E=2.91e+00 Dyn=6.50e+00 Axis=1.23e-01 | eigL2=2.511e-01 axis=0.892 | lr=5.00e-05 
+[035] steps=8750 train=8.8321e+00 | val=9.9767e+00 (del=1.94e-03) | L=4.17e+00 E=2.91e+00 Dyn=6.42e+00 Axis=1.43e-01 | eigL2=2.505e-01 axis=0.890 | lr=5.00e-05 
+[036] steps=9000 train=8.8212e+00 | val=1.0025e+01 (del=-4.80e-03) | L=4.14e+00 E=3.00e+00 Dyn=6.44e+00 Axis=1.27e-01 | eigL2=2.504e-01 axis=0.888 | lr=5.00e-05 
+[037] steps=9250 train=8.8164e+00 | val=9.9816e+00 (del=4.29e-03) | L=4.13e+00 E=2.94e+00 Dyn=6.43e+00 Axis=1.24e-01 | eigL2=2.509e-01 axis=0.890 | lr=5.00e-05 
+[038] steps=9500 train=8.7729e+00 | val=1.0040e+01 (del=-5.85e-03) | L=4.12e+00 E=3.02e+00 Dyn=6.46e+00 Axis=1.33e-01 | eigL2=2.500e-01 axis=0.889 | lr=5.00e-05 
+[039] steps=9750 train=8.7673e+00 | val=1.0053e+01 (del=-1.32e-03) | L=4.20e+00 E=3.02e+00 Dyn=6.43e+00 Axis=1.26e-01 | eigL2=2.512e-01 axis=0.887 | lr=2.50e-05 
+[040] steps=10000 train=8.7004e+00 | val=1.0008e+01 (del=4.54e-03) | L=4.17e+00 E=3.00e+00 Dyn=6.41e+00 Axis=1.42e-01 | eigL2=2.520e-01 axis=0.886 | lr=2.50e-05 
+[041] steps=10250 train=8.6575e+00 | val=9.9742e+00 (del=3.34e-03) | L=4.18e+00 E=3.01e+00 Dyn=6.37e+00 Axis=1.29e-01 | eigL2=2.515e-01 axis=0.885 | lr=2.50e-05 
+[042] steps=10500 train=8.6727e+00 | val=9.9622e+00 (del=1.20e-03) | L=4.10e+00 E=2.95e+00 Dyn=6.43e+00 Axis=1.27e-01 | eigL2=2.508e-01 axis=0.888 | lr=2.50e-05 
+[043] steps=10750 train=8.6511e+00 | val=9.9438e+00 (del=1.85e-03) | L=4.14e+00 E=2.94e+00 Dyn=6.39e+00 Axis=1.34e-01 | eigL2=2.492e-01 axis=0.886 | lr=2.50e-05 
+[044] steps=11000 train=8.6470e+00 | val=9.9873e+00 (del=-4.37e-03) | L=4.09e+00 E=3.00e+00 Dyn=6.43e+00 Axis=1.27e-01 | eigL2=2.511e-01 axis=0.890 | lr=2.50e-05 
+[045] steps=11250 train=8.6322e+00 | val=1.0011e+01 (del=-2.40e-03) | L=4.07e+00 E=3.03e+00 Dyn=6.45e+00 Axis=1.33e-01 | eigL2=2.507e-01 axis=0.892 | lr=2.50e-05 
+[046] steps=11500 train=8.6243e+00 | val=9.9848e+00 (del=2.64e-03) | L=4.09e+00 E=2.99e+00 Dyn=6.43e+00 Axis=1.26e-01 | eigL2=2.514e-01 axis=0.889 | lr=2.50e-05 
+[047] steps=11750 train=8.6042e+00 | val=9.9858e+00 (del=-9.54e-05) | L=4.14e+00 E=3.02e+00 Dyn=6.40e+00 Axis=1.34e-01 | eigL2=2.511e-01 axis=0.888 | lr=1.25e-05 
+[048] steps=12000 train=8.5788e+00 | val=9.9736e+00 (del=1.22e-03) | L=4.11e+00 E=3.03e+00 Dyn=6.39e+00 Axis=1.25e-01 | eigL2=2.519e-01 axis=0.888 | lr=1.25e-05 
+[049] steps=12250 train=8.5670e+00 | val=1.0003e+01 (del=-2.97e-03) | L=4.15e+00 E=3.07e+00 Dyn=6.38e+00 Axis=1.27e-01 | eigL2=2.515e-01 axis=0.887 | lr=1.25e-05 
+[050] steps=12500 train=8.5585e+00 | val=9.9528e+00 (del=5.05e-03) | L=4.13e+00 E=3.00e+00 Dyn=6.38e+00 Axis=1.28e-01 | eigL2=2.516e-01 axis=0.887 | lr=1.25e-05 
+[051] steps=12750 train=8.5545e+00 | val=9.9755e+00 (del=-2.28e-03) | L=4.10e+00 E=3.01e+00 Dyn=6.40e+00 Axis=1.27e-01 | eigL2=2.513e-01 axis=0.886 | lr=6.25e-06 
+[052] steps=13000 train=8.5267e+00 | val=9.9782e+00 (del=-2.80e-04) | L=4.10e+00 E=3.03e+00 Dyn=6.40e+00 Axis=1.27e-01 | eigL2=2.510e-01 axis=0.887 | lr=6.25e-06 
+[053] steps=13250 train=8.5323e+00 | val=9.9570e+00 (del=2.13e-03) | L=4.10e+00 E=3.00e+00 Dyn=6.40e+00 Axis=1.28e-01 | eigL2=2.514e-01 axis=0.888 | lr=6.25e-06 
+[054] steps=13500 train=8.5230e+00 | val=9.9879e+00 (del=-3.10e-03) | L=4.11e+00 E=3.04e+00 Dyn=6.40e+00 Axis=1.29e-01 | eigL2=2.512e-01 axis=0.888 | lr=6.25e-06 
+[055] steps=13750 train=8.5147e+00 | val=9.9922e+00 (del=-4.33e-04) | L=4.10e+00 E=3.05e+00 Dyn=6.40e+00 Axis=1.29e-01 | eigL2=2.510e-01 axis=0.887 | lr=3.13e-06 
+[056] steps=14000 train=8.5068e+00 | val=9.9759e+00 (del=1.63e-03) | L=4.10e+00 E=3.04e+00 Dyn=6.39e+00 Axis=1.25e-01 | eigL2=2.510e-01 axis=0.888 | lr=3.13e-06 
+[057] steps=14250 train=8.5010e+00 | val=9.9780e+00 (del=-2.06e-04) | L=4.09e+00 E=3.03e+00 Dyn=6.40e+00 Axis=1.28e-01 | eigL2=2.509e-01 axis=0.888 | lr=3.13e-06 
+[058] steps=14500 train=8.4990e+00 | val=9.9847e+00 (del=-6.78e-04) | L=4.11e+00 E=3.05e+00 Dyn=6.39e+00 Axis=1.28e-01 | eigL2=2.509e-01 axis=0.888 | lr=3.13e-06 
+[059] steps=14750 train=8.4952e+00 | val=9.9848e+00 (del=-8.51e-06) | L=4.11e+00 E=3.04e+00 Dyn=6.40e+00 Axis=1.28e-01 | eigL2=2.509e-01 axis=0.888 | lr=1.56e-06 
+[060] steps=15000 train=8.4950e+00 | val=9.9831e+00 (del=1.70e-04) | L=4.11e+00 E=3.04e+00 Dyn=6.40e+00 Axis=1.27e-01 | eigL2=2.508e-01 axis=0.888 | lr=1.56e-06 
+[061] steps=15250 train=8.4845e+00 | val=9.9799e+00 (del=3.25e-04) | L=4.10e+00 E=3.03e+00 Dyn=6.40e+00 Axis=1.28e-01 | eigL2=2.509e-01 axis=0.889 | lr=1.56e-06 
+[062] steps=15500 train=8.4911e+00 | val=9.9785e+00 (del=1.37e-04) | L=4.11e+00 E=3.03e+00 Dyn=6.40e+00 Axis=1.28e-01 | eigL2=2.509e-01 axis=0.889 | lr=1.56e-06 
+[063] steps=15750 train=8.4892e+00 | val=9.9814e+00 (del=-2.91e-04) | L=4.10e+00 E=3.03e+00 Dyn=6.40e+00 Axis=1.28e-01 | eigL2=2.508e-01 axis=0.888 | lr=7.81e-07 
+[064] steps=16000 train=8.4809e+00 | val=9.9805e+00 (del=9.10e-05) | L=4.10e+00 E=3.04e+00 Dyn=6.40e+00 Axis=1.27e-01 | eigL2=2.509e-01 axis=0.889 | lr=7.81e-07 
+[065] steps=16250 train=8.4891e+00 | val=9.9802e+00 (del=3.07e-05) | L=4.10e+00 E=3.03e+00 Dyn=6.40e+00 Axis=1.27e-01 | eigL2=2.509e-01 axis=0.889 | lr=7.81e-07 
+[066] steps=16500 train=8.4874e+00 | val=9.9826e+00 (del=-2.44e-04) | L=4.10e+00 E=3.04e+00 Dyn=6.40e+00 Axis=1.27e-01 | eigL2=2.509e-01 axis=0.889 | lr=7.81e-07 
+Early stop at epoch 66 (best @ 43, best_val=9.944e+00).
+Validation of model: transformer
+Pred I (trace=1):
+ [[ 0.3497 -0.0015 -0.0194]
+ [-0.0015  0.3443 -0.0007]
+ [-0.0194 -0.0007  0.306 ]]
+True I (trace=1):
+ [[ 0.3797 -0.0024 -0.0709]
+ [-0.0024  0.4057 -0.0065]
+ [-0.0709 -0.0065  0.2145]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.298614 0.344211 0.357174]
+eigs_true: [0.188065 0.405968 0.405968]
+eigs_unscaled: [1.135114 2.450324 2.450324]
+abs_err  : [0.11055  0.061756 0.048793]
+rel_err  : [0.587827 0.152121 0.12019 ]
+axis |cos|: [0.99995  0.996922 0.9969  ]   mean= 0.9979
+frame misalignment: 4.523 deg  (0.0789 rad)
+axis match (pred i -> true j): [0, 1, 2]
+
+==========================================================================================
+Total parameters: 232576
+Total memory (bytes): 930304
+Total memory (MB): 0.88720703125
+==========================================================================================
+mean(E_pred)/mean(E_true) = 1.2396531
+|U_p^T U_t| (axis cosines):
+ [[0.99995    0.00565344 0.00824883]
+ [0.00499085 0.99692166 0.07824526]
+ [0.00866579 0.07820018 0.99689996]]
+training tcn
+[001] steps=250 train=1.4379e+01 | val=1.2719e+01 (del=inf) | L=7.12e+00 E=5.26e+00 Dyn=6.52e+00 Axis=1.15e-01 | eigL2=1.782e-01 axis=0.842 | lr=2.00e-04 
+[002] steps=500 train=1.2250e+01 | val=1.2228e+01 (del=3.86e-02) | L=6.69e+00 E=4.80e+00 Dyn=6.47e+00 Axis=1.14e-01 | eigL2=1.827e-01 axis=0.836 | lr=2.00e-04 
+[003] steps=750 train=1.1918e+01 | val=1.2068e+01 (del=1.31e-02) | L=6.61e+00 E=4.78e+00 Dyn=6.36e+00 Axis=1.14e-01 | eigL2=1.853e-01 axis=0.837 | lr=2.00e-04 
+[004] steps=1000 train=1.1673e+01 | val=1.1872e+01 (del=1.62e-02) | L=6.45e+00 E=4.54e+00 Dyn=6.37e+00 Axis=1.14e-01 | eigL2=1.871e-01 axis=0.839 | lr=2.00e-04 
+[005] steps=1250 train=1.1571e+01 | val=1.2525e+01 (del=-5.50e-02) | L=6.27e+00 E=6.12e+00 Dyn=6.32e+00 Axis=1.13e-01 | eigL2=1.845e-01 axis=0.842 | lr=2.00e-04 
+[006] steps=1500 train=1.1331e+01 | val=1.2119e+01 (del=3.24e-02) | L=5.78e+00 E=5.73e+00 Dyn=6.35e+00 Axis=1.11e-01 | eigL2=1.895e-01 axis=0.847 | lr=2.00e-04 
+[007] steps=1750 train=1.1165e+01 | val=1.1498e+01 (del=5.12e-02) | L=5.70e+00 E=4.74e+00 Dyn=6.27e+00 Axis=1.11e-01 | eigL2=1.915e-01 axis=0.850 | lr=2.00e-04 
+[008] steps=2000 train=1.0861e+01 | val=1.1255e+01 (del=2.12e-02) | L=5.91e+00 E=4.45e+00 Dyn=6.06e+00 Axis=1.12e-01 | eigL2=1.905e-01 axis=0.856 | lr=2.00e-04 
+[009] steps=2250 train=1.0745e+01 | val=1.1147e+01 (del=9.61e-03) | L=5.74e+00 E=4.78e+00 Dyn=5.88e+00 Axis=1.11e-01 | eigL2=1.917e-01 axis=0.853 | lr=2.00e-04 
+[010] steps=2500 train=1.0497e+01 | val=1.0723e+01 (del=3.80e-02) | L=5.65e+00 E=4.32e+00 Dyn=5.73e+00 Axis=1.09e-01 | eigL2=1.892e-01 axis=0.868 | lr=2.00e-04 
+[011] steps=2750 train=1.0328e+01 | val=1.0770e+01 (del=-4.32e-03) | L=5.45e+00 E=4.62e+00 Dyn=5.72e+00 Axis=1.08e-01 | eigL2=1.916e-01 axis=0.862 | lr=2.00e-04 
+[012] steps=3000 train=1.0037e+01 | val=1.0390e+01 (del=3.53e-02) | L=5.28e+00 E=4.34e+00 Dyn=5.57e+00 Axis=1.07e-01 | eigL2=1.937e-01 axis=0.863 | lr=2.00e-04 
+[013] steps=3250 train=9.7992e+00 | val=1.0507e+01 (del=-1.13e-02) | L=5.19e+00 E=5.17e+00 Dyn=5.32e+00 Axis=1.07e-01 | eigL2=1.911e-01 axis=0.858 | lr=2.00e-04 
+[014] steps=3500 train=9.6765e+00 | val=1.0116e+01 (del=3.71e-02) | L=5.04e+00 E=4.94e+00 Dyn=5.12e+00 Axis=1.07e-01 | eigL2=1.923e-01 axis=0.863 | lr=2.00e-04 
+[015] steps=3750 train=9.3687e+00 | val=9.8211e+00 (del=2.92e-02) | L=4.95e+00 E=4.86e+00 Dyn=4.90e+00 Axis=1.03e-01 | eigL2=1.919e-01 axis=0.860 | lr=2.00e-04 
+[016] steps=4000 train=9.2067e+00 | val=9.3829e+00 (del=4.46e-02) | L=4.71e+00 E=4.69e+00 Dyn=4.67e+00 Axis=1.00e-01 | eigL2=1.895e-01 axis=0.862 | lr=2.00e-04 
+[017] steps=4250 train=8.9855e+00 | val=9.4756e+00 (del=-9.88e-03) | L=4.96e+00 E=4.96e+00 Dyn=4.50e+00 Axis=1.01e-01 | eigL2=1.904e-01 axis=0.872 | lr=2.00e-04 
+[018] steps=4500 train=8.8038e+00 | val=9.7338e+00 (del=-2.72e-02) | L=4.80e+00 E=5.79e+00 Dyn=4.43e+00 Axis=1.00e-01 | eigL2=1.894e-01 axis=0.865 | lr=2.00e-04 
+[019] steps=4750 train=8.6587e+00 | val=9.6853e+00 (del=4.98e-03) | L=4.71e+00 E=5.94e+00 Dyn=4.35e+00 Axis=1.02e-01 | eigL2=1.878e-01 axis=0.861 | lr=2.00e-04 
+[020] steps=5000 train=8.7003e+00 | val=9.3542e+00 (del=3.42e-02) | L=4.58e+00 E=5.61e+00 Dyn=4.25e+00 Axis=9.79e-02 | eigL2=1.851e-01 axis=0.863 | lr=2.00e-04 
+[021] steps=5250 train=8.4266e+00 | val=9.1981e+00 (del=1.67e-02) | L=4.66e+00 E=5.94e+00 Dyn=3.89e+00 Axis=9.67e-02 | eigL2=1.838e-01 axis=0.866 | lr=2.00e-04 
+[022] steps=5500 train=8.3431e+00 | val=8.9097e+00 (del=3.14e-02) | L=5.10e+00 E=5.07e+00 Dyn=3.82e+00 Axis=9.84e-02 | eigL2=1.787e-01 axis=0.872 | lr=2.00e-04 
+[023] steps=5750 train=8.2370e+00 | val=1.0012e+01 (del=-1.24e-01) | L=4.57e+00 E=7.79e+00 Dyn=3.82e+00 Axis=9.64e-02 | eigL2=1.870e-01 axis=0.867 | lr=2.00e-04 
+[024] steps=6000 train=7.9943e+00 | val=8.7545e+00 (del=1.26e-01) | L=4.22e+00 E=5.89e+00 Dyn=3.69e+00 Axis=9.41e-02 | eigL2=1.862e-01 axis=0.861 | lr=2.00e-04 
+[025] steps=6250 train=7.9652e+00 | val=9.7802e+00 (del=-1.17e-01) | L=4.49e+00 E=7.91e+00 Dyn=3.57e+00 Axis=9.35e-02 | eigL2=1.820e-01 axis=0.864 | lr=2.00e-04 
+[026] steps=6500 train=7.8292e+00 | val=8.5950e+00 (del=1.21e-01) | L=4.59e+00 E=5.68e+00 Dyn=3.45e+00 Axis=9.34e-02 | eigL2=1.789e-01 axis=0.869 | lr=2.00e-04 
+[027] steps=6750 train=7.7317e+00 | val=9.2202e+00 (del=-7.27e-02) | L=4.88e+00 E=6.68e+00 Dyn=3.43e+00 Axis=9.70e-02 | eigL2=1.771e-01 axis=0.874 | lr=2.00e-04 
+[028] steps=7000 train=7.6588e+00 | val=8.4099e+00 (del=8.79e-02) | L=4.57e+00 E=5.60e+00 Dyn=3.32e+00 Axis=9.20e-02 | eigL2=1.800e-01 axis=0.868 | lr=2.00e-04 
+[029] steps=7250 train=7.5346e+00 | val=8.5513e+00 (del=-1.68e-02) | L=4.36e+00 E=6.29e+00 Dyn=3.21e+00 Axis=9.17e-02 | eigL2=1.755e-01 axis=0.872 | lr=2.00e-04 
+[030] steps=7500 train=7.4372e+00 | val=8.1679e+00 (del=4.48e-02) | L=4.27e+00 E=5.90e+00 Dyn=3.08e+00 Axis=8.98e-02 | eigL2=1.760e-01 axis=0.872 | lr=2.00e-04 
+[031] steps=7750 train=7.4617e+00 | val=8.3620e+00 (del=-2.38e-02) | L=4.47e+00 E=5.81e+00 Dyn=3.21e+00 Axis=8.94e-02 | eigL2=1.729e-01 axis=0.869 | lr=2.00e-04 
+[032] steps=8000 train=7.3165e+00 | val=9.3742e+00 (del=-1.21e-01) | L=4.19e+00 E=7.89e+00 Dyn=3.32e+00 Axis=9.27e-02 | eigL2=1.774e-01 axis=0.864 | lr=2.00e-04 
+[033] steps=8250 train=7.2338e+00 | val=8.5369e+00 (del=8.93e-02) | L=4.48e+00 E=6.48e+00 Dyn=3.04e+00 Axis=9.01e-02 | eigL2=1.761e-01 axis=0.876 | lr=2.00e-04 
+[034] steps=8500 train=7.3985e+00 | val=8.4574e+00 (del=9.31e-03) | L=4.61e+00 E=6.45e+00 Dyn=2.92e+00 Axis=9.01e-02 | eigL2=1.724e-01 axis=0.881 | lr=1.00e-04 
+[035] steps=8750 train=6.6872e+00 | val=7.4075e+00 (del=1.24e-01) | L=4.14e+00 E=5.18e+00 Dyn=2.74e+00 Axis=8.52e-02 | eigL2=1.751e-01 axis=0.876 | lr=1.00e-04 
+[036] steps=9000 train=6.4391e+00 | val=7.3724e+00 (del=4.74e-03) | L=4.05e+00 E=5.45e+00 Dyn=2.62e+00 Axis=8.44e-02 | eigL2=1.729e-01 axis=0.884 | lr=1.00e-04 
+[037] steps=9250 train=6.5108e+00 | val=7.3655e+00 (del=9.37e-04) | L=4.14e+00 E=5.39e+00 Dyn=2.59e+00 Axis=8.39e-02 | eigL2=1.721e-01 axis=0.882 | lr=1.00e-04 
+[038] steps=9500 train=6.3529e+00 | val=7.1634e+00 (del=2.74e-02) | L=4.06e+00 E=5.28e+00 Dyn=2.49e+00 Axis=8.30e-02 | eigL2=1.733e-01 axis=0.885 | lr=1.00e-04 
+[039] steps=9750 train=6.2831e+00 | val=7.5339e+00 (del=-5.17e-02) | L=4.25e+00 E=5.76e+00 Dyn=2.52e+00 Axis=8.50e-02 | eigL2=1.691e-01 axis=0.879 | lr=1.00e-04 
+[040] steps=10000 train=6.2461e+00 | val=7.3919e+00 (del=1.89e-02) | L=3.81e+00 E=5.88e+00 Dyn=2.54e+00 Axis=8.16e-02 | eigL2=1.729e-01 axis=0.878 | lr=1.00e-04 
+[041] steps=10250 train=6.2005e+00 | val=7.3389e+00 (del=7.17e-03) | L=4.18e+00 E=5.63e+00 Dyn=2.42e+00 Axis=8.34e-02 | eigL2=1.708e-01 axis=0.882 | lr=1.00e-04 
+[042] steps=10500 train=6.2637e+00 | val=7.5867e+00 (del=-3.38e-02) | L=4.38e+00 E=6.08e+00 Dyn=2.35e+00 Axis=8.68e-02 | eigL2=1.703e-01 axis=0.879 | lr=5.00e-05 
+[043] steps=10750 train=5.8628e+00 | val=7.1216e+00 (del=6.13e-02) | L=4.01e+00 E=5.62e+00 Dyn=2.30e+00 Axis=8.25e-02 | eigL2=1.700e-01 axis=0.880 | lr=5.00e-05 
+[044] steps=11000 train=5.8587e+00 | val=6.9919e+00 (del=1.82e-02) | L=4.13e+00 E=5.35e+00 Dyn=2.24e+00 Axis=8.27e-02 | eigL2=1.683e-01 axis=0.884 | lr=5.00e-05 
+[045] steps=11250 train=5.7662e+00 | val=7.2239e+00 (del=-3.32e-02) | L=4.19e+00 E=5.84e+00 Dyn=2.20e+00 Axis=8.29e-02 | eigL2=1.686e-01 axis=0.884 | lr=5.00e-05 
+[046] steps=11500 train=5.7518e+00 | val=7.0245e+00 (del=2.76e-02) | L=3.98e+00 E=5.60e+00 Dyn=2.22e+00 Axis=8.05e-02 | eigL2=1.691e-01 axis=0.886 | lr=5.00e-05 
+[047] steps=11750 train=5.7326e+00 | val=7.2187e+00 (del=-2.76e-02) | L=4.29e+00 E=5.84e+00 Dyn=2.15e+00 Axis=8.23e-02 | eigL2=1.677e-01 axis=0.886 | lr=5.00e-05 
+[048] steps=12000 train=5.6951e+00 | val=7.0202e+00 (del=2.75e-02) | L=4.05e+00 E=5.61e+00 Dyn=2.18e+00 Axis=8.09e-02 | eigL2=1.698e-01 axis=0.885 | lr=2.50e-05 
+[049] steps=12250 train=5.5637e+00 | val=6.7548e+00 (del=3.78e-02) | L=4.12e+00 E=5.22e+00 Dyn=2.08e+00 Axis=8.09e-02 | eigL2=1.681e-01 axis=0.885 | lr=2.50e-05 
+[050] steps=12500 train=5.5339e+00 | val=6.7786e+00 (del=-3.53e-03) | L=3.99e+00 E=5.32e+00 Dyn=2.11e+00 Axis=8.02e-02 | eigL2=1.689e-01 axis=0.883 | lr=2.50e-05 
+[051] steps=12750 train=5.5347e+00 | val=6.7900e+00 (del=-1.68e-03) | L=4.05e+00 E=5.37e+00 Dyn=2.07e+00 Axis=8.06e-02 | eigL2=1.670e-01 axis=0.887 | lr=2.50e-05 
+[052] steps=13000 train=5.5230e+00 | val=6.8233e+00 (del=-4.91e-03) | L=4.08e+00 E=5.43e+00 Dyn=2.06e+00 Axis=8.03e-02 | eigL2=1.675e-01 axis=0.884 | lr=2.50e-05 
+[053] steps=13250 train=5.4880e+00 | val=6.7373e+00 (del=1.26e-02) | L=4.02e+00 E=5.30e+00 Dyn=2.07e+00 Axis=8.01e-02 | eigL2=1.679e-01 axis=0.886 | lr=2.50e-05 
+[054] steps=13500 train=5.4551e+00 | val=6.9103e+00 (del=-2.57e-02) | L=4.18e+00 E=5.60e+00 Dyn=2.02e+00 Axis=8.12e-02 | eigL2=1.666e-01 axis=0.882 | lr=2.50e-05 
+[055] steps=13750 train=5.4650e+00 | val=6.8427e+00 (del=9.78e-03) | L=4.04e+00 E=5.50e+00 Dyn=2.06e+00 Axis=8.01e-02 | eigL2=1.677e-01 axis=0.887 | lr=2.50e-05 
+[056] steps=14000 train=5.4542e+00 | val=6.7423e+00 (del=1.47e-02) | L=3.98e+00 E=5.47e+00 Dyn=2.01e+00 Axis=7.95e-02 | eigL2=1.681e-01 axis=0.883 | lr=2.50e-05 
+[057] steps=14250 train=5.4709e+00 | val=6.8865e+00 (del=-2.14e-02) | L=4.09e+00 E=5.66e+00 Dyn=2.00e+00 Axis=7.98e-02 | eigL2=1.666e-01 axis=0.884 | lr=1.25e-05 
+[058] steps=14500 train=5.3656e+00 | val=6.7406e+00 (del=2.12e-02) | L=4.02e+00 E=5.46e+00 Dyn=1.99e+00 Axis=7.95e-02 | eigL2=1.673e-01 axis=0.884 | lr=1.25e-05 
+[059] steps=14750 train=5.3612e+00 | val=6.6986e+00 (del=6.23e-03) | L=4.04e+00 E=5.40e+00 Dyn=1.97e+00 Axis=7.96e-02 | eigL2=1.669e-01 axis=0.885 | lr=1.25e-05 
+[060] steps=15000 train=5.3314e+00 | val=6.7018e+00 (del=-4.83e-04) | L=4.06e+00 E=5.40e+00 Dyn=1.97e+00 Axis=7.98e-02 | eigL2=1.664e-01 axis=0.885 | lr=1.25e-05 
+[061] steps=15250 train=5.3364e+00 | val=6.7807e+00 (del=-1.18e-02) | L=4.03e+00 E=5.55e+00 Dyn=1.99e+00 Axis=8.02e-02 | eigL2=1.663e-01 axis=0.886 | lr=1.25e-05 
+[062] steps=15500 train=5.3195e+00 | val=6.7395e+00 (del=6.08e-03) | L=3.98e+00 E=5.52e+00 Dyn=1.98e+00 Axis=7.87e-02 | eigL2=1.659e-01 axis=0.885 | lr=1.25e-05 
+[063] steps=15750 train=5.3100e+00 | val=6.6627e+00 (del=1.14e-02) | L=4.06e+00 E=5.36e+00 Dyn=1.94e+00 Axis=7.94e-02 | eigL2=1.660e-01 axis=0.887 | lr=1.25e-05 
+[064] steps=16000 train=5.3213e+00 | val=6.6416e+00 (del=3.17e-03) | L=3.94e+00 E=5.39e+00 Dyn=1.97e+00 Axis=7.87e-02 | eigL2=1.668e-01 axis=0.886 | lr=1.25e-05 
+[065] steps=16250 train=5.3009e+00 | val=6.6651e+00 (del=-3.54e-03) | L=4.01e+00 E=5.40e+00 Dyn=1.95e+00 Axis=7.92e-02 | eigL2=1.663e-01 axis=0.885 | lr=1.25e-05 
+[066] steps=16500 train=5.2931e+00 | val=6.7647e+00 (del=-1.49e-02) | L=4.09e+00 E=5.57e+00 Dyn=1.93e+00 Axis=7.90e-02 | eigL2=1.659e-01 axis=0.887 | lr=1.25e-05 
+[067] steps=16750 train=5.2746e+00 | val=6.7504e+00 (del=2.11e-03) | L=4.00e+00 E=5.61e+00 Dyn=1.94e+00 Axis=7.86e-02 | eigL2=1.660e-01 axis=0.886 | lr=1.25e-05 
+[068] steps=17000 train=5.2927e+00 | val=6.6631e+00 (del=1.29e-02) | L=4.03e+00 E=5.43e+00 Dyn=1.93e+00 Axis=7.88e-02 | eigL2=1.657e-01 axis=0.888 | lr=6.25e-06 
+[069] steps=17250 train=5.2354e+00 | val=6.7174e+00 (del=-8.15e-03) | L=4.03e+00 E=5.50e+00 Dyn=1.94e+00 Axis=7.92e-02 | eigL2=1.658e-01 axis=0.886 | lr=6.25e-06 
+[070] steps=17500 train=5.2259e+00 | val=6.6732e+00 (del=6.59e-03) | L=4.07e+00 E=5.42e+00 Dyn=1.92e+00 Axis=7.94e-02 | eigL2=1.655e-01 axis=0.887 | lr=6.25e-06 
+[071] steps=17750 train=5.2328e+00 | val=6.6464e+00 (del=4.01e-03) | L=4.03e+00 E=5.41e+00 Dyn=1.92e+00 Axis=7.89e-02 | eigL2=1.657e-01 axis=0.888 | lr=6.25e-06 
+[072] steps=18000 train=5.2009e+00 | val=6.6551e+00 (del=-1.31e-03) | L=4.03e+00 E=5.43e+00 Dyn=1.92e+00 Axis=7.89e-02 | eigL2=1.658e-01 axis=0.884 | lr=3.13e-06 
+[073] steps=18250 train=5.2136e+00 | val=6.6687e+00 (del=-2.04e-03) | L=4.03e+00 E=5.46e+00 Dyn=1.92e+00 Axis=7.88e-02 | eigL2=1.656e-01 axis=0.886 | lr=3.13e-06 
+[074] steps=18500 train=5.1974e+00 | val=6.6618e+00 (del=1.04e-03) | L=4.04e+00 E=5.43e+00 Dyn=1.92e+00 Axis=7.89e-02 | eigL2=1.656e-01 axis=0.886 | lr=3.13e-06 
+[075] steps=18750 train=5.2084e+00 | val=6.6492e+00 (del=1.88e-03) | L=4.05e+00 E=5.41e+00 Dyn=1.91e+00 Axis=7.88e-02 | eigL2=1.652e-01 axis=0.887 | lr=3.13e-06 
+[076] steps=19000 train=5.1856e+00 | val=6.6596e+00 (del=-1.55e-03) | L=4.02e+00 E=5.44e+00 Dyn=1.92e+00 Axis=7.87e-02 | eigL2=1.655e-01 axis=0.885 | lr=1.56e-06 
+[077] steps=19250 train=5.1927e+00 | val=6.6503e+00 (del=1.38e-03) | L=4.04e+00 E=5.43e+00 Dyn=1.91e+00 Axis=7.88e-02 | eigL2=1.654e-01 axis=0.886 | lr=1.56e-06 
+[078] steps=19500 train=5.1900e+00 | val=6.6604e+00 (del=-1.52e-03) | L=4.05e+00 E=5.43e+00 Dyn=1.91e+00 Axis=7.88e-02 | eigL2=1.652e-01 axis=0.887 | lr=1.56e-06 
+[079] steps=19750 train=5.1618e+00 | val=6.6582e+00 (del=3.33e-04) | L=4.03e+00 E=5.45e+00 Dyn=1.91e+00 Axis=7.87e-02 | eigL2=1.653e-01 axis=0.887 | lr=1.56e-06 
+[080] steps=20000 train=5.1714e+00 | val=6.6663e+00 (del=-1.22e-03) | L=4.05e+00 E=5.45e+00 Dyn=1.91e+00 Axis=7.89e-02 | eigL2=1.652e-01 axis=0.887 | lr=7.81e-07 
+[081] steps=20250 train=5.1661e+00 | val=6.6678e+00 (del=-2.18e-04) | L=4.04e+00 E=5.46e+00 Dyn=1.91e+00 Axis=7.88e-02 | eigL2=1.652e-01 axis=0.887 | lr=7.81e-07 
+[082] steps=20500 train=5.1725e+00 | val=6.6753e+00 (del=-1.13e-03) | L=4.05e+00 E=5.47e+00 Dyn=1.91e+00 Axis=7.88e-02 | eigL2=1.651e-01 axis=0.886 | lr=7.81e-07 
+[083] steps=20750 train=5.1886e+00 | val=6.6486e+00 (del=4.00e-03) | L=4.04e+00 E=5.43e+00 Dyn=1.91e+00 Axis=7.87e-02 | eigL2=1.652e-01 axis=0.887 | lr=7.81e-07 
+Early stop at epoch 83 (best @ 64, best_val=6.642e+00).
+Validation of model: tcn
+Pred I (trace=1):
+ [[ 0.3736 -0.0148 -0.0645]
+ [-0.0148  0.4078 -0.0009]
+ [-0.0645 -0.0009  0.2186]]
+True I (trace=1):
+ [[ 0.3797 -0.0024 -0.0709]
+ [-0.0024  0.4057 -0.0065]
+ [-0.0709 -0.0065  0.2145]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.195105 0.387742 0.417153]
+eigs_true: [0.188065 0.405968 0.405968]
+eigs_unscaled: [1.135114 2.450324 2.450324]
+abs_err  : [0.00704  0.018226 0.011186]
+rel_err  : [0.037435 0.044895 0.027553]
+axis |cos|: [0.999977 0.824835 0.824854]   mean= 0.8832
+frame misalignment: 34.428 deg  (0.6009 rad)
+axis match (pred i -> true j): [0, 2, 1]
+
+==========================================================================================
+Total parameters: 82688
+Total memory (bytes): 330752
+Total memory (MB): 0.3154296875
+==========================================================================================
+mean(E_pred)/mean(E_true) = 1.0152068
+|U_p^T U_t| (axis cosines):
+ [[9.9997699e-01 3.8530671e-03 5.5868961e-03]
+ [6.7866785e-03 5.6533259e-01 8.2483512e-01]
+ [1.9693151e-05 8.2485408e-01 5.6534570e-01]]

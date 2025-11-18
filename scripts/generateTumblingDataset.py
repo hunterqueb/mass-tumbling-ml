@@ -183,6 +183,7 @@ if __name__ == "__main__":
     w0_list = []
     q_list = []
     w_list = []
+    I_list_real = []
 
     m_list = []
     for shape in pickShape:
@@ -229,7 +230,7 @@ if __name__ == "__main__":
         I_rand = project_spd_and_normalize(I_rand) # ensure SPD and trace=1
         
         I_list.append(I_rand)
-            
+        I_list_real.append(I_principal)    
         # Initial attitude and angular velocity (body frame)
         q0 = np.random.randn(4)
         q0 /= np.linalg.norm(q0)
@@ -284,7 +285,8 @@ if __name__ == "__main__":
         w=np.array(w_list[:args.systems]),
         I_true=np.array(I_list[:args.systems]),
         m=np.array(m_list[:args.systems]),
-        dt=dt
+        dt=dt,
+        I_true_real=np.array(I_list_real[:args.systems])
     )
 
     print(f"Saving validation dataset to {args.output} ...")
@@ -294,7 +296,8 @@ if __name__ == "__main__":
         w=np.array(w_list[args.systems:]),
         I_true=np.array(I_list[args.systems:]),
         m=np.array(m_list[args.systems:]),
-        dt=dt
+        dt=dt,
+        I_true_real=np.array(I_list_real[args.systems:])
     )
 
     print("Done.")
