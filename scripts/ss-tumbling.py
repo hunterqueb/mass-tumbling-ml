@@ -298,6 +298,7 @@ class TorqueFreeDataset(torch.utils.data.Dataset):
             self.w = torch.tensor(data['w'],device=self.device,dtype=torch.float32)
             self.N = self.q.shape[0]
             self.I_true_unscaled = data["I_true_real"] if "I_true_real" in data else None
+            self.shape = data["shape"] if "shape" in data else None
         else:
             # generate on the fly
             self.I_true=[]; self.q=[]; self.w=[]
@@ -345,6 +346,10 @@ class TorqueFreeDataset(torch.utils.data.Dataset):
             q=self.q.cpu().numpy(),
             w=self.w.cpu().numpy()
         )
+    def get_shape(self,i):
+        if hasattr(self, "shape") and self.shape is not None:
+            return self.shape[i]
+        return None
 
 # ======================== model ========================
 
@@ -1173,6 +1178,12 @@ def main():
 
     if not args.save:
         plt.show()
+    else:
+        # save model state_dicts
+        torch.save(model_lstm.state_dict(), os.path.join(log_dir, "model_lstm.pth"))
+        torch.save(model_mamba.state_dict(), os.path.join(log_dir, "model_mamba.pth"))
+        torch.save(model_transformer.state_dict(), os.path.join(log_dir, "model_transformer.pth"))
+        torch.save(model_tcn.state_dict(), os.path.join(log_dir, "model_tcn.pth"))
 
 if __name__ == "__main__":
     main()
