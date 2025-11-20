@@ -332,6 +332,6 @@ if __name__ == "__main__":
     Jt_est = np.diag(J_transformer)
     Jt_est_rand = np.diag(np.random.rand(3))  
     
-    J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=Jt_diag_true, Jt_est=Jt_est,initialization="NN",Kom = 1000,Kr = 3000)
-    J_hat_rand, J_true, Jt_true = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=Jt_diag_true, Jt_est=Jt_est_rand, initialization="random",Gamma_scale=5.0,Kom = 1000,Kr = 3000)
+    J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=Jt_diag_true, Jt_est=Jt_est,initialization="NN",Kom = 10000,Kr = 3000,Gamma_scale=15.0)
+    J_hat_rand, J_true, Jt_true = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=Jt_diag_true, Jt_est=Jt_est_rand, initialization="random",Gamma_scale=15.0,Kom = 10000,Kr = 3000)
     plt.show()
