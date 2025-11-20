@@ -1,0 +1,161 @@
+Logging to logs/selfsup_inference_20251120-173259
+GPU is available
+Loaded datasets from data/shapes/2000/self-sup-
+Validation of model: bilstm
+Analyzing sample #170 from validation set: cylinder 
+Pred I (trace=1):
+ [[ 0.3347 -0.0466  0.0279]
+ [-0.0466  0.3255  0.0135]
+ [ 0.0279  0.0135  0.3398]]
+True I (trace=1):
+ [[ 0.2617 -0.0457  0.0376]
+ [-0.0457  0.3664  0.0141]
+ [ 0.0376  0.0141  0.3719]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.27101  0.347964 0.381027]
+eigs_true: [0.232876 0.383562 0.383562]
+eigs_unscaled: [0.501101 0.825349 0.825349]
+abs_err  : [0.038134 0.035599 0.002536]
+rel_err  : [0.163753 0.09281  0.006611]
+axis |cos|: [0.912389 0.755222 0.675012]   mean= 0.7809
+frame misalignment: 47.832 deg  (0.8348 rad)
+axis match (pred i -> true j): [0, 1, 2]
+
+==========================================================================================
+Total parameters: 54848
+Total memory (bytes): 219392
+Total memory (MB): 0.209228515625
+==========================================================================================
+mean(E_pred)/mean(E_true) = 0.9592987
+|U_p^T U_t| (axis cosines):
+ [[0.91238904 0.22087252 0.344618  ]
+ [0.06358403 0.75522196 0.6523779 ]
+ [0.40435535 0.61713463 0.67501223]]
+Validation of model: mamba
+Analyzing sample #170 from validation set: cylinder 
+Pred I (trace=1):
+ [[ 0.2539 -0.0403  0.0355]
+ [-0.0403  0.3654  0.0047]
+ [ 0.0355  0.0047  0.3807]]
+True I (trace=1):
+ [[ 0.2617 -0.0457  0.0376]
+ [-0.0457  0.3664  0.0141]
+ [ 0.0376  0.0141  0.3719]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.232405 0.375598 0.391997]
+eigs_true: [0.232876 0.383562 0.383562]
+eigs_unscaled: [0.501101 0.825349 0.825349]
+abs_err  : [0.000471 0.007964 0.008435]
+rel_err  : [0.002021 0.020763 0.02199 ]
+axis |cos|: [0.997382 0.972117 0.970861]   mean= 0.9801
+frame misalignment: 14.027 deg  (0.2448 rad)
+axis match (pred i -> true j): [0, 2, 1]
+
+==========================================================================================
+Total parameters: 48518
+Total memory (bytes): 194072
+Total memory (MB): 0.18508148193359375
+==========================================================================================
+mean(E_pred)/mean(E_true) = 0.9982263
+|U_p^T U_t| (axis cosines):
+ [[0.9973822  0.05747356 0.04387939]
+ [0.02936155 0.23264991 0.97211725]
+ [0.06607959 0.9708609  0.23035337]]
+Validation of model: transformer
+Analyzing sample #170 from validation set: cylinder 
+Pred I (trace=1):
+ [[ 0.2317  0.1026 -0.0597]
+ [ 0.1026  0.3867  0.0047]
+ [-0.0597  0.0047  0.3816]]
+True I (trace=1):
+ [[ 0.2617 -0.0457  0.0376]
+ [-0.0457  0.3664  0.0141]
+ [ 0.0376  0.0141  0.3719]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.166176 0.386711 0.447113]
+eigs_true: [0.232876 0.383562 0.383562]
+eigs_unscaled: [0.501101 0.825349 0.825349]
+abs_err  : [0.0667   0.003149 0.063551]
+rel_err  : [0.286418 0.00821  0.165686]
+axis |cos|: [0.587997 0.775186 0.80551 ]   mean= 0.7229
+frame misalignment: 54.243 deg  (0.9467 rad)
+axis match (pred i -> true j): [2, 1, 0]
+
+==========================================================================================
+Total parameters: 232576
+Total memory (bytes): 930304
+Total memory (MB): 0.88720703125
+==========================================================================================
+mean(E_pred)/mean(E_true) = 0.93940055
+|U_p^T U_t| (axis cosines):
+ [[0.5782816  0.5655531  0.5879966 ]
+ [0.12939714 0.7751863  0.61833864]
+ [0.8055102  0.2814888  0.5214569 ]]
+Validation of model: tcn
+Analyzing sample #170 from validation set: cylinder 
+Pred I (trace=1):
+ [[ 0.3999  0.0321  0.186 ]
+ [ 0.0321  0.2636 -0.0859]
+ [ 0.186  -0.0859  0.3365]]
+True I (trace=1):
+ [[ 0.2617 -0.0457  0.0376]
+ [-0.0457  0.3664  0.0141]
+ [ 0.0376  0.0141  0.3719]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.12489  0.314779 0.560331]
+eigs_true: [0.232876 0.383562 0.383562]
+eigs_unscaled: [0.501101 0.825349 0.825349]
+abs_err  : [0.107985 0.068783 0.176768]
+rel_err  : [0.463703 0.179328 0.46086 ]
+axis |cos|: [0.784169 0.761108 0.874872]   mean= 0.8067
+frame misalignment: 44.759 deg  (0.7812 rad)
+axis match (pred i -> true j): [2, 0, 1]
+
+==========================================================================================
+Total parameters: 82688
+Total memory (bytes): 330752
+Total memory (MB): 0.3154296875
+==========================================================================================
+mean(E_pred)/mean(E_true) = 0.961775
+|U_p^T U_t| (axis cosines):
+ [[0.46937054 0.40591934 0.7841689 ]
+ [0.7611085  0.26425147 0.5923555 ]
+ [0.4476663  0.87487185 0.18491678]]
+----- Demo: Adaptive estimation with partial target inertia -----
+Chaser satellite inertia J_fixed:
+ [[1200  100 -200]
+ [ 100 2200  300]
+ [-200  300 3100]]
+True target inertia       Jt_true:
+ [[5.011  0.     0.    ]
+ [0.     8.2535 0.    ]
+ [0.     0.     8.2535]]
+Estimated target inertia Jt_est (from random generator):
+ [[0.0104 0.     0.    ]
+ [0.     0.8429 0.    ]
+ [0.     0.     0.2684]]
+Estimated target inertia Jt_est (from LSTM model):
+ [[0.271 0.    0.   ]
+ [0.    0.348 0.   ]
+ [0.    0.    0.381]]
+Estimated target inertia Jt_est (from Mamba model):
+ [[0.2324 0.     0.    ]
+ [0.     0.3756 0.    ]
+ [0.     0.     0.392 ]]
+Estimated target inertia Jt_est (from Transformer model):
+ [[0.1662 0.     0.    ]
+ [0.     0.3867 0.    ]
+ [0.     0.     0.4471]]
+Estimated target inertia Jt_est (from TCN model):
+ [[0.1249 0.     0.    ]
+ [0.     0.3148 0.    ]
+ [0.     0.     0.5603]]
+Time when ||Jt_hat - Jt_true||_F < 1e-1 for LSTM Initialization: Not reached within simulation time.
+Time when ||Jt_hat - Jt_true||_F < 1e-1 for Mamba Initialization: Not reached within simulation time.
+Time when ||Jt_hat - Jt_true||_F < 1e-1 for Transformer Initialization: Not reached within simulation time.
+Time when ||Jt_hat - Jt_true||_F < 1e-1 for TCN Initialization: Not reached within simulation time.
+Time when ||Jt_hat - Jt_true||_F < 1e-1 for random Initialization: Not reached within simulation time.
