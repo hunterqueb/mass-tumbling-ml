@@ -51,15 +51,27 @@ def rand_rotation_QR():
     if np.linalg.det(Q) < 0:
         Q[:,0] = -Q[:,0]
     return Q
+def quat_to_R_np(q):
+    """
+    numpy version of quat_to_R
+    """
+    w, x, y, z = q
+    
+    R = np.array([
+        [1 - 2*y**2 - 2*z**2, 2*x*y - 2*z*w, 2*x*z + 2*y*w],
+        [2*x*y + 2*z*w, 1 - 2*x**2 - 2*z**2, 2*y*z - 2*x*w],
+        [2*x*z - 2*y*w, 2*y*z + 2*x*w, 1 - 2*x**2 - 2*y**2]
+    ])
+    return R
 
-def inertia_from_principal(I_principal):
+def inertia_from_principal(I_principal,q):
     # I_principal: iterable of (I1, I2, I3) or a 3x3 diagonal matrix
     if np.array(I_principal).shape == (3,):
         D = np.diag(I_principal)
     else:
         D = np.diag(np.diag(I_principal))
-    R = rand_rotation_QR()
-    return R @ D @ R.T  # SPD, same eigenvalues, random body axes
+    R = quat_to_R_np(q)
+    return R @ D @ R.T  # SPD, same eigenvalues, random body axes from q
 
 def omega_mat(w):
     wx, wy, wz = w
@@ -177,7 +189,7 @@ if __name__ == "__main__":
     # Inertia tensor in body frame (principal axes, kg*m^2)
 
     # pick from a set of actual shapes
-    pickShape = np.random.choice(['box', 'ellipsoid', 'cylinder', 'cone', 'rod'], size=total_systems)
+    pickShape = np.random.choice(['box', 'ellipsoid', 'cylinder', 'cone'], size=total_systems)
     I_list = []
     q0_list = []
     w0_list = []
@@ -188,6 +200,14 @@ if __name__ == "__main__":
     m_list = []
     for shape in pickShape:
         m = np.random.uniform(1.0, 10.0)
+        
+        q0 = np.random.randn(4)
+        q0 /= np.linalg.norm(q0)
+        q0_list.append(q0)
+        # Random angular velocity
+        w0 = np.random.uniform(0.2, 5.0, size=3)
+        w0_list.append(w0)
+        m_list.append(m)
 
         if shape == 'box':
         # box with side lengths (a,b,c)
@@ -223,22 +243,15 @@ if __name__ == "__main__":
         # slender rod about center
             L = np.random.uniform(0.1, 3.0)
             I1 = (1/12) * m * L**2
-            I2 = I1
+            I2 = 0
             I3 = (1/12) * m * (L)**2
         I_principal = np.diag([I1, I2, I3]) # generate random principal inertia values from shape
-        I_rand = inertia_from_principal(I_principal) # random orientation
+        I_rand = inertia_from_principal(I_principal,q0) # random orientation
         I_rand = project_spd_and_normalize(I_rand) # ensure SPD and trace=1
         
         I_list.append(I_rand)
         I_list_real.append(I_principal)    
         # Initial attitude and angular velocity (body frame)
-        q0 = np.random.randn(4)
-        q0 /= np.linalg.norm(q0)
-        q0_list.append(q0)
-        # Random angular velocity
-        w0 = np.random.uniform(0.2, 5.0, size=3)
-        w0_list.append(w0)
-        m_list.append(m)
 
     I_true = I_list   
 
@@ -286,7 +299,8 @@ if __name__ == "__main__":
         I_true=np.array(I_list[:args.systems]),
         m=np.array(m_list[:args.systems]),
         dt=dt,
-        I_true_real=np.array(I_list_real[:args.systems])
+        I_true_real=np.array(I_list_real[:args.systems]),
+        shape=pickShape[:args.systems]
     )
 
     print(f"Saving validation dataset to {args.output} ...")
@@ -297,7 +311,9 @@ if __name__ == "__main__":
         I_true=np.array(I_list[args.systems:]),
         m=np.array(m_list[args.systems:]),
         dt=dt,
-        I_true_real=np.array(I_list_real[args.systems:])
+        I_true_real=np.array(I_list_real[args.systems:]),
+        shape=pickShape[args.systems:]
+
     )
 
     print("Done.")
