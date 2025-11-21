@@ -1,0 +1,161 @@
+Logging to logs/selfsup_inference_20251120-214351
+GPU is available
+Loaded datasets from data/shapes/2000/self-sup-
+Validation of model: bilstm
+Analyzing sample #210 from validation set: box 
+Pred I (trace=1):
+ [[ 0.3193 -0.0507 -0.0365]
+ [-0.0507  0.3297  0.0283]
+ [-0.0365  0.0283  0.351 ]]
+True I (trace=1):
+ [[ 0.3211 -0.0223  0.055 ]
+ [-0.0223  0.36    0.0252]
+ [ 0.055   0.0252  0.3189]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.272378 0.317085 0.410537]
+eigs_true: [0.254293 0.37009  0.375617]
+eigs_unscaled: [2.720578 3.959435 4.018564]
+abs_err  : [0.018084 0.053005 0.034921]
+rel_err  : [0.071115 0.143221 0.092969]
+axis |cos|: [0.761325 0.501204 0.739194]   mean= 0.6672
+frame misalignment: 59.943 deg  (1.0462 rad)
+axis match (pred i -> true j): [2, 0, 1]
+
+==========================================================================================
+Total parameters: 54848
+Total memory (bytes): 219392
+Total memory (MB): 0.209228515625
+==========================================================================================
+mean(E_pred)/mean(E_true) = 0.956032
+|U_p^T U_t| (axis cosines):
+ [[0.6075339  0.22646655 0.7613248 ]
+ [0.5012044  0.6342756  0.5886329 ]
+ [0.6161953  0.7391938  0.2718379 ]]
+Validation of model: mamba
+Analyzing sample #210 from validation set: box 
+Pred I (trace=1):
+ [[ 0.3102 -0.0166  0.0494]
+ [-0.0166  0.3715  0.0274]
+ [ 0.0494  0.0274  0.3183]]
+True I (trace=1):
+ [[ 0.3211 -0.0223  0.055 ]
+ [-0.0223  0.36    0.0252]
+ [ 0.055   0.0252  0.3189]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.256415 0.360094 0.383491]
+eigs_true: [0.254293 0.37009  0.375617]
+eigs_unscaled: [2.720578 3.959435 4.018564]
+abs_err  : [0.002122 0.009996 0.007874]
+rel_err  : [0.008344 0.02701  0.020963]
+axis |cos|: [0.998511 0.752226 0.75184 ]   mean= 0.8342
+frame misalignment: 41.298 deg  (0.7208 rad)
+axis match (pred i -> true j): [0, 2, 1]
+
+==========================================================================================
+Total parameters: 48518
+Total memory (bytes): 194072
+Total memory (MB): 0.18508148193359375
+==========================================================================================
+mean(E_pred)/mean(E_true) = 1.0052751
+|U_p^T U_t| (axis cosines):
+ [[0.9985107  0.05219819 0.01586609]
+ [0.04631245 0.65727586 0.75222576]
+ [0.02883646 0.75184035 0.6587144 ]]
+Validation of model: transformer
+Analyzing sample #210 from validation set: box 
+Pred I (trace=1):
+ [[ 0.3694 -0.0301  0.0087]
+ [-0.0301  0.2585 -0.0152]
+ [ 0.0087 -0.0152  0.372 ]]
+True I (trace=1):
+ [[ 0.3211 -0.0223  0.055 ]
+ [-0.0223  0.36    0.0252]
+ [ 0.055   0.0252  0.3189]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.249595 0.362899 0.387506]
+eigs_true: [0.254293 0.37009  0.375617]
+eigs_unscaled: [2.720578 3.959435 4.018564]
+abs_err  : [0.004699 0.00719  0.011889]
+rel_err  : [0.018478 0.019429 0.031653]
+axis |cos|: [0.772528 0.925032 0.842269]   mean= 0.8466
+frame misalignment: 39.654 deg  (0.6921 rad)
+axis match (pred i -> true j): [1, 0, 2]
+
+==========================================================================================
+Total parameters: 232576
+Total memory (bytes): 930304
+Total memory (MB): 0.88720703125
+==========================================================================================
+mean(E_pred)/mean(E_true) = 0.88474184
+|U_p^T U_t| (axis cosines):
+ [[0.37799257 0.77252805 0.5102176 ]
+ [0.92503154 0.33772084 0.17395756]
+ [0.03792402 0.5377221  0.84226876]]
+Validation of model: tcn
+Analyzing sample #210 from validation set: box 
+Pred I (trace=1):
+ [[ 0.2638  0.1903 -0.0488]
+ [ 0.1903  0.3912 -0.0695]
+ [-0.0488 -0.0695  0.3451]]
+True I (trace=1):
+ [[ 0.3211 -0.0223  0.055 ]
+ [-0.0223  0.36    0.0252]
+ [ 0.055   0.0252  0.3189]]
+
+--- Principal inertia comparison ---
+eigs_pred: [0.126825 0.311723 0.561452]
+eigs_true: [0.254293 0.37009  0.375617]
+eigs_unscaled: [2.720578 3.959435 4.018564]
+abs_err  : [0.127468 0.058367 0.185836]
+rel_err  : [0.501265 0.157711 0.494748]
+axis |cos|: [0.874778 0.901148 0.839397]   mean= 0.8718
+frame misalignment: 36.132 deg  (0.6306 rad)
+axis match (pred i -> true j): [1, 2, 0]
+
+==========================================================================================
+Total parameters: 82688
+Total memory (bytes): 330752
+Total memory (MB): 0.3154296875
+==========================================================================================
+mean(E_pred)/mean(E_true) = 0.8032302
+|U_p^T U_t| (axis cosines):
+ [[0.3649337  0.8747779  0.31872717]
+ [0.40278444 0.16030423 0.9011477 ]
+ [0.83939743 0.4572375  0.29384652]]
+----- Demo: Adaptive estimation with partial target inertia -----
+Chaser satellite inertia J_fixed:
+ [[1200  100 -200]
+ [ 100 2200  300]
+ [-200  300 3100]]
+True target inertia       Jt_true:
+ [[27.2058  0.      0.    ]
+ [ 0.     39.5943  0.    ]
+ [ 0.      0.     40.1856]]
+Estimated target inertia Jt_est (from random generator):
+ [[0.0652 0.     0.    ]
+ [0.     0.3726 0.    ]
+ [0.     0.     0.9997]]
+Estimated target inertia Jt_est (from LSTM model):
+ [[0.2724 0.     0.    ]
+ [0.     0.3171 0.    ]
+ [0.     0.     0.4105]]
+Estimated target inertia Jt_est (from Mamba model):
+ [[0.2564 0.     0.    ]
+ [0.     0.3601 0.    ]
+ [0.     0.     0.3835]]
+Estimated target inertia Jt_est (from Transformer model):
+ [[0.2496 0.     0.    ]
+ [0.     0.3629 0.    ]
+ [0.     0.     0.3875]]
+Estimated target inertia Jt_est (from TCN model):
+ [[0.1268 0.     0.    ]
+ [0.     0.3117 0.    ]
+ [0.     0.     0.5615]]
+Time when ||Jt_hat - Jt_true||_F < 1e-1 for LSTM Initialization: 4.21 s
+Time when ||Jt_hat - Jt_true||_F < 1e-1 for Mamba Initialization: 3.97 s
+Time when ||Jt_hat - Jt_true||_F < 1e-1 for Transformer Initialization: 3.91 s
+Time when ||Jt_hat - Jt_true||_F < 1e-1 for TCN Initialization: 6.23 s
+Time when ||Jt_hat - Jt_true||_F < 1e-1 for random Initialization: Not reached within simulation time.
