@@ -226,7 +226,7 @@ def vec(M):
     M = np.asarray(M)
     return M.reshape(-1, order="F")
 
-def dyn_partial_adapt_v2(t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, dith,control_torque_log):
+def dyn_partial_adapt_v2(t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, dith,control_torque_log,control_torque_max):
     """
     x = [q(4), w(3), alpha(3)]
     """
@@ -264,8 +264,9 @@ def dyn_partial_adapt_v2(t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, di
     # Control torque
     u = uPD + np.cross(w, Jhat @ w) + u_dith
 
-    # clamp u between 10Nm control
-    # u = np.clip(u, -100.0, 100.0)
+    if control_torque_max is not None:
+        # clamp u between specified control torque max
+        u = np.clip(u, -control_torque_max, control_torque_max)
 
     # save control torque for diagnostics
     control_torque_log.append(u.copy())
@@ -1078,10 +1079,11 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
                               Kr = 30.0,
                               Kom = 10.0,
                               R_bt = np.eye(3),
-                              q0 = None, w0 = None
-                              ):
+                              q0 = None, w0 = None,
+                              tf = 60.0,
+                              control_torque_max = None    
+):
     np.random.seed(1110)
-    tf = 60.0    
 
     # -------- Weaken feedback (so inertia matters) --------
     K_R = Kr * np.eye(3)
@@ -1137,7 +1139,7 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
     # First run: "NN" init
     sol = solve_ivp(
         fun=lambda t, x: dyn_partial_adapt_v2(
-            t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, dith, control_torque_log
+            t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, dith, control_torque_log, control_torque_max
         ),
         t_span=(0.0, tf),
         y0=x0,
@@ -1357,19 +1359,20 @@ if __name__ == "__main__":
     print("Estimated target inertia Jt_est (from TCN model):\n", np.array_str(np.array(I_pred_tcn), precision=4, suppress_small=True))
 
 
-    Gamma_scale = 20.0
-    Kr = 3000.0
-    Kom = 10000.0
+    Gamma_scale = 2.0e-2
+    Kr = 3.0e-2
+    Kom = 1.0e-2
 
-    J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_lstm,initialization="LSTM",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs)
+    tf = 600
+    control_torque_max = 60  # Nm - max slew rate of 1 deg/s per sec for 3200 kgm^2 chaser inertia
 
-    J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_mamba,initialization="Mamba",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs)
+    J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_mamba,initialization="Mamba",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
 
-    J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_transformer,initialization="Transformer",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs)
+    # J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_transformer,initialization="Transformer",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
 
-    J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_tcn,initialization="TCN",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs)
+    # J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_tcn,initialization="TCN",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
 
-    J_hat_rand, J_true, Jt_true = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=Jt_est_rand, initialization="random",Gamma_scale=Gamma_scale,Kom = Kom,Kr = Kr,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs)
+    J_hat_rand, J_true, Jt_true = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=Jt_est_rand, initialization="random",Gamma_scale=Gamma_scale,Kom = Kom,Kr = Kr,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
 
     if not args.save:
         plt.show()
