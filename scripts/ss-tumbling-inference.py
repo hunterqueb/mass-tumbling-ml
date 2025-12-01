@@ -226,7 +226,7 @@ def vec(M):
     M = np.asarray(M)
     return M.reshape(-1, order="F")
 
-def dyn_partial_adapt_v2(t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, dith):
+def dyn_partial_adapt_v2(t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, dith,control_torque_log):
     """
     x = [q(4), w(3), alpha(3)]
     """
@@ -263,6 +263,12 @@ def dyn_partial_adapt_v2(t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, di
 
     # Control torque
     u = uPD + np.cross(w, Jhat @ w) + u_dith
+
+    # clamp u between 10Nm control
+    # u = np.clip(u, -100.0, 100.0)
+
+    # save control torque for diagnostics
+    control_torque_log.append(u.copy())
 
     # True plant dynamics: J_true * wdot = u - w × (J_true w)
     rhs = u - np.cross(w, J_true @ w)
@@ -1036,16 +1042,16 @@ def main():
     trainer_tcn = InertiaTrainer(model_tcn, tcfg)
 
     # get state dict folder and load if exists
-    lstm_state_dict = torch.load(args.load + "model_lstm.pth")
+    lstm_state_dict = torch.load(args.load + "model_lstm.pth",map_location=device)
     model_lstm.load_state_dict(lstm_state_dict)
 
-    mamba_state_dict = torch.load(args.load + "model_mamba.pth")
+    mamba_state_dict = torch.load(args.load + "model_mamba.pth",map_location=device)
     model_mamba.load_state_dict(mamba_state_dict,strict=False)
     
-    transformer_state_dict = torch.load(args.load + "model_transformer.pth")
+    transformer_state_dict = torch.load(args.load + "model_transformer.pth",map_location=device)
     model_transformer.load_state_dict(transformer_state_dict)
     
-    tcn_state_dict = torch.load(args.load + "model_tcn.pth")
+    tcn_state_dict = torch.load(args.load + "model_tcn.pth",map_location=device)
     model_tcn.load_state_dict(tcn_state_dict)
 
     inference_num = np.random.randint(0, len(val_set))
@@ -1126,11 +1132,12 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
     alpha0 = np.array([1.0, 1.0, 1.0], dtype=float)
 
     x0 = np.concatenate([q0, w0, alpha0])
+    control_torque_log = []
 
     # First run: "NN" init
     sol = solve_ivp(
         fun=lambda t, x: dyn_partial_adapt_v2(
-            t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, dith
+            t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, dith, control_torque_log
         ),
         t_span=(0.0, tf),
         y0=x0,
@@ -1268,6 +1275,15 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
     plt.grid(True)
     if args.save:
         plt.savefig(log_dir+"/frob_error_"+initialization+".png")
+
+    plt.figure()
+    plt.plot(control_torque_log)
+    plt.xlabel("Timestep")
+    plt.ylabel("Control Torque Magnitude [Nm]")
+    plt.title("Control Torque Magnitude over Time")
+    plt.grid(True)
+    if args.save:
+        plt.savefig(log_dir+"/control_torque_magnitude_"+initialization+".png")
 
     # Store last Jt_hat from run
     J_hat = Jt_hat_k.copy()
