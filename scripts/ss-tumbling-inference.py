@@ -329,7 +329,15 @@ def dyn_partial_adapt_v2(t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, di
     )
 
     denom = np.trace(Phi.T @ Phi) + eps_reg
-    alpha_dot = -Gamma @ (Phi.T @ tau_err) / denom
+    alpha_dot_raw = -Gamma @ (Phi.T @ tau_err) / denom
+    # --- projection to enforce alpha >= alpha_min > 0 ---
+    alpha_min = 1e-2  # choose a physically meaningful lower bound
+
+    alpha_dot = alpha_dot_raw.copy()
+    for i in range(alpha_dot.size):
+        # if we're at/below the bound and the update would push alpha lower, block it
+        if alpha[i] <= alpha_min and alpha_dot[i] < 0.0:
+            alpha_dot[i] = 0.0
 
     dx = np.concatenate([qdot, wdot, alpha_dot])
     return dx
@@ -1389,21 +1397,22 @@ if __name__ == "__main__":
     print("Estimated target inertia Jt_est (from Transformer model):\n", np.array_str(np.array(I_pred_transformer), precision=4, suppress_small=True))
     print("Estimated target inertia Jt_est (from TCN model):\n", np.array_str(np.array(I_pred_tcn), precision=4, suppress_small=True))
 
-    control_torque_max = 60 * 5 # Nm - max slew rate of 1 deg/s per sec for 3200 kgm^2 chaser inertia
+    control_torque_max = 60 * 5 # Nm - max slew rate of 1 deg/s per sec for 3200 kgm^2 chaser inertia is 60Nm
 
 
     qf_obs = qf_obs / np.linalg.norm(qf_obs)
-
+    swapped = False
     # Enforce shortest-path: w >= 0
     if qf_obs[0] < 0.0:
         qf_obs = -qf_obs
+        swapped = True
     theta_max = 2 * np.arctan2(np.sqrt(np.sum(qf_obs[1:4]**2)), qf_obs[0])  # radian
     print("Initial attitude error (rad):", theta_max)
     
     theta_design = 0.52
-    Kr = 0.9 * control_torque_max / theta_design
+    Kr = 0.6 * control_torque_max / theta_design
     
-    damping_ratio = 0.7
+    damping_ratio = 0.5
     Kom = (2.0 * damping_ratio * np.sqrt(Kr * np.linalg.eigvals(J_fixed)))
     print(Kom, Kr)
 
@@ -1415,9 +1424,12 @@ if __name__ == "__main__":
 
     T_theta = np.max(t_settling_no_sat)
 
-    Gamma_scale = -1.0 / (T_theta)
+    Gamma_scale = 5.0 / (T_theta)
 
+    if swapped:
+        qf_obs = -qf_obs
 
+    # control_torque_max = None  # No saturation
     J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_mamba,initialization="Mamba",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
 
     # J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_transformer,initialization="Transformer",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
