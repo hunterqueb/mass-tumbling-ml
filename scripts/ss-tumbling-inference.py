@@ -53,6 +53,33 @@ def quat_to_R_np(q):
     ])
     return R
 
+def quat_to_euler(q: np.ndarray) -> np.ndarray:
+    """
+    Convert quaternion to Euler angles (roll, pitch, yaw) in radians.
+    q: (4,) scalar-first
+    returns: (3,) roll, pitch, yaw
+    """
+    w, x, y, z = q
+
+    # Roll (x-axis rotation)
+    sinr_cosp = 2 * (w * x + y * z)
+    cosr_cosp = 1 - 2 * (x * x + y * y)
+    roll = np.arctan2(sinr_cosp, cosr_cosp)
+
+    # Pitch (y-axis rotation)
+    sinp = 2 * (w * y - z * x)
+    if abs(sinp) >= 1:
+        pitch = np.sign(sinp) * (np.pi / 2)  # use 90 degrees if out of range
+    else:
+        pitch = np.arcsin(sinp)
+
+    # Yaw (z-axis rotation)
+    siny_cosp = 2 * (w * z + x * y)
+    cosy_cosp = 1 - 2 * (y * y + z * z)
+    yaw = np.arctan2(siny_cosp, cosy_cosp)
+
+    return np.array([roll, pitch, yaw])
+
 def gaussian_smooth_1d(x: torch.Tensor, sigma=2.0, k=9) -> torch.Tensor:
     """Depthwise 1D Gaussian smoothing over time. x: (B,T,D) -> (B,T,D)"""
     half = k//2
@@ -851,7 +878,7 @@ def principal_inertia_comparison(I_pred, I_true):
 
 # ======================== CLI demo ========================
 
-def main():
+def main(plot=True):
 
     from qutils.ml import getDevice
     device = getDevice()
@@ -873,22 +900,23 @@ def main():
     sample_idx = np.random.randint(0, len(val_set))
     q_sample, w_sample, I_sample, dt_sample, _ = val_set[sample_idx]
     time_array = np.arange(0, args.T, dt_sample)[:q_sample.shape[0]]
-    plt.figure(figsize=(12, 5))
-    plt.subplot(1, 2, 1)
-    plt.plot(time_array, w_sample.cpu().numpy())
-    plt.title('Angular Velocity (omega)')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Omega (rad/s)')
-    plt.legend(['omega_x', 'omega_y', 'omega_z'])
-    plt.grid()
-    plt.subplot(1, 2, 2)
-    plt.plot(time_array, q_sample.cpu().numpy())
-    plt.title('Orientation (Quaternion)')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Quaternion Components')
-    plt.legend(['q_w', 'q_x', 'q_y', 'q_z'])
-    plt.grid()
-    plt.tight_layout()
+    if plot:
+        plt.figure(figsize=(12, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(time_array, w_sample.cpu().numpy())
+        plt.title('Angular Velocity (omega)')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Omega (rad/s)')
+        plt.legend(['omega_x', 'omega_y', 'omega_z'])
+        plt.grid()
+        plt.subplot(1, 2, 2)
+        plt.plot(time_array, q_sample.cpu().numpy())
+        plt.title('Orientation (Quaternion)')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Quaternion Components')
+        plt.legend(['q_w', 'q_x', 'q_y', 'q_z'])
+        plt.grid()
+        plt.tight_layout()
 
 
     val_set.convert_to_float32()
@@ -949,17 +977,18 @@ def main():
             Y = ellipsoid_transformed[1, :].reshape(y.shape)
             Z = ellipsoid_transformed[2, :].reshape(z.shape)
             ax.plot_surface(X, Y, Z, color=color, alpha=alpha, label=label)
-        fig = plt.figure(figsize=(8, 8))
-        ax = fig.add_subplot(111, projection='3d')
-        plot_ellipsoid(I_true_np.numpy(), ax, color='g', alpha=0.5, label='True Inertia')
-        plot_ellipsoid(I_pred_np.numpy(), ax, color='r', alpha=0.5, label='Predicted Inertia')
-        ax.set_title('Inertia Ellipsoids')
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        plt.legend()
-        if args.save:
-            plt.savefig(log_dir+"/inertia_ellipsoids_"+modelStr+".png")
+        if plot:
+            fig = plt.figure(figsize=(8, 8))
+            ax = fig.add_subplot(111, projection='3d')
+            plot_ellipsoid(I_true_np.numpy(), ax, color='g', alpha=0.5, label='True Inertia')
+            plot_ellipsoid(I_pred_np.numpy(), ax, color='r', alpha=0.5, label='Predicted Inertia')
+            ax.set_title('Inertia Ellipsoids')
+            ax.set_xlabel('X')
+            ax.set_ylabel('Y')
+            ax.set_zlabel('Z')
+            plt.legend()
+            if args.save:
+                plt.savefig(log_dir+"/inertia_ellipsoids_"+modelStr+".png")
 
         # using the inertia matrices to compute energy and angular momentum and plot the error over time
         I_pred_torch = I_hat[0].to(device)
@@ -974,45 +1003,46 @@ def main():
         L_pred = (quat_to_R(q_torch) @ Iw_pred.unsqueeze(-1)).squeeze(-1)
         L_true = (quat_to_R(q_torch) @ Iw_true.unsqueeze(-1)).squeeze(-1)
         time_array = np.arange(0, args.T, dt_val)[:q.shape[0]]
-        plt.figure(figsize=(12, 5))
-        plt.subplot(1, 2, 1)
-        plt.plot(time_array, E_pred.cpu().numpy(), label='Predicted Energy')
-        plt.plot(time_array, E_true.cpu().numpy(), label='True Energy')
-        plt.title('Rotational Kinetic Energy')
-        plt.xlabel('Time (s)')
-        plt.ylabel('Energy (J)')
-        plt.legend()
-        plt.grid()
-        plt.subplot(1, 2, 2)
-        plt.plot(time_array, np.linalg.norm(L_pred.cpu().numpy(), axis=-1), label='Predicted |L|')
-        plt.plot(time_array, np.linalg.norm(L_true.cpu().numpy(), axis=-1), label='True |L|')
-        plt.title('Angular Momentum Magnitude')
-        plt.xlabel('Time (s)')
-        plt.ylabel('|L| (kg·m²/s)')
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
-        if args.save:
-            plt.savefig(log_dir+"/energy_angular_momentum_"+modelStr+".png")
+        if plot:
+            plt.figure(figsize=(12, 5))
+            plt.subplot(1, 2, 1)
+            plt.plot(time_array, E_pred.cpu().numpy(), label='Predicted Energy')
+            plt.plot(time_array, E_true.cpu().numpy(), label='True Energy')
+            plt.title('Rotational Kinetic Energy')
+            plt.xlabel('Time (s)')
+            plt.ylabel('Energy (J)')
+            plt.legend()
+            plt.grid()
+            plt.subplot(1, 2, 2)
+            plt.plot(time_array, np.linalg.norm(L_pred.cpu().numpy(), axis=-1), label='Predicted |L|')
+            plt.plot(time_array, np.linalg.norm(L_true.cpu().numpy(), axis=-1), label='True |L|')
+            plt.title('Angular Momentum Magnitude')
+            plt.xlabel('Time (s)')
+            plt.ylabel('|L| (kg·m²/s)')
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
+            if args.save:
+                plt.savefig(log_dir+"/energy_angular_momentum_"+modelStr+".png")
 
-        plt.figure(figsize=(12, 5))
-        plt.subplot(1, 2, 1)
-        plt.plot(time_array, np.abs(E_pred.cpu().numpy() - E_true.cpu().numpy()), label='Energy Error')
-        plt.title('Energy Conservation Error')
-        plt.xlabel('Time (s)')
-        plt.ylabel('Absolute Error (J)')
-        plt.legend()
-        plt.grid()
-        plt.subplot(1, 2, 2)
-        plt.plot(time_array, np.linalg.norm(L_pred.cpu().numpy() - L_true.cpu().numpy(), axis=-1), label='Angular Momentum Error')
-        plt.title('Angular Momentum Conservation Error')
-        plt.xlabel('Time (s)')
-        plt.ylabel('Absolute Error (kg·m²/s)')
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
-        if args.save:
-            plt.savefig(log_dir+"/conservation_errors_"+modelStr+".png")
+            plt.figure(figsize=(12, 5))
+            plt.subplot(1, 2, 1)
+            plt.plot(time_array, np.abs(E_pred.cpu().numpy() - E_true.cpu().numpy()), label='Energy Error')
+            plt.title('Energy Conservation Error')
+            plt.xlabel('Time (s)')
+            plt.ylabel('Absolute Error (J)')
+            plt.legend()
+            plt.grid()
+            plt.subplot(1, 2, 2)
+            plt.plot(time_array, np.linalg.norm(L_pred.cpu().numpy() - L_true.cpu().numpy(), axis=-1), label='Angular Momentum Error')
+            plt.title('Angular Momentum Conservation Error')
+            plt.xlabel('Time (s)')
+            plt.ylabel('Absolute Error (kg·m²/s)')
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
+            if args.save:
+                plt.savefig(log_dir+"/conservation_errors_"+modelStr+".png")
 
 
         lp, Up = np.linalg.eigh(I_pred_np)
@@ -1090,7 +1120,7 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
     K_Om = Kom * np.eye(3)
 
     # -------- Fast adaptation + normalization --------
-    Gamma = Gamma_scale * np.diag([0.3, 0.3, 0.3])
+    Gamma = Gamma_scale * np.eye(3)
     eps_reg = 1e-6
 
     # -------- Estimated target (principal frame) --------
@@ -1131,7 +1161,7 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
         "A": 0,
         "w": 2.0 * np.pi * np.array([0.4, 0.7, 1.1], dtype=float),
     }
-    alpha0 = np.array([1.0, 1.0, 1.0], dtype=float)
+    alpha0 = 0 * np.array([1.0, 1.0, 1.0], dtype=float)
 
     x0 = np.concatenate([q0, w0, alpha0])
     control_torque_log = []
@@ -1344,10 +1374,11 @@ if __name__ == "__main__":
 
         print("Logging to", log_dir)
 
-    I_pred_lstm, I_pred_mamba, I_pred_transformer, I_pred_tcn, I_true, Rf_obs, qf_obs, wf_obs = main()
+    I_pred_lstm, I_pred_mamba, I_pred_transformer, I_pred_tcn, I_true, Rf_obs, qf_obs, wf_obs = main(plot=False)
     J_fixed = [[1200,100,-200],[100,2200,300], [-200,300,3100]] # from spacecraft modeling attitude determination and control quaternion based approach pg 140
     Jt_est_rand = np.diag(np.random.rand(3))  
     I_true= 10.0 * I_true
+    init_euler_angle = quat_to_euler(qf_obs)
 
     print("----- Demo: Adaptive estimation with partial target inertia -----")
     print("Chaser satellite inertia J_fixed:\n", np.array_str(np.array(J_fixed), precision=4, suppress_small=True))
@@ -1358,13 +1389,34 @@ if __name__ == "__main__":
     print("Estimated target inertia Jt_est (from Transformer model):\n", np.array_str(np.array(I_pred_transformer), precision=4, suppress_small=True))
     print("Estimated target inertia Jt_est (from TCN model):\n", np.array_str(np.array(I_pred_tcn), precision=4, suppress_small=True))
 
+    control_torque_max = 60 * 5 # Nm - max slew rate of 1 deg/s per sec for 3200 kgm^2 chaser inertia
 
-    Gamma_scale = 2.0e-2
-    Kr = 3.0e-2
-    Kom = 1.0e-2
 
-    tf = 600
-    control_torque_max = 60  # Nm - max slew rate of 1 deg/s per sec for 3200 kgm^2 chaser inertia
+    qf_obs = qf_obs / np.linalg.norm(qf_obs)
+
+    # Enforce shortest-path: w >= 0
+    if qf_obs[0] < 0.0:
+        qf_obs = -qf_obs
+    theta_max = 2 * np.arctan2(np.sqrt(np.sum(qf_obs[1:4]**2)), qf_obs[0])  # radian
+    print("Initial attitude error (rad):", theta_max)
+    
+    theta_design = 0.52
+    Kr = 0.9 * control_torque_max / theta_design
+    
+    damping_ratio = 0.7
+    Kom = (2.0 * damping_ratio * np.sqrt(Kr * np.linalg.eigvals(J_fixed)))
+    print(Kom, Kr)
+
+    t_settling_no_sat = 8 * np.linalg.eigvals(J_fixed) / Kom
+    t_settling_sat = 2 * np.sqrt(theta_max * np.linalg.eigvals(J_fixed) / control_torque_max)
+    print("Estimated settling times without control saturation (s):", np.array_str(t_settling_no_sat, precision=4, suppress_small=True))
+    print("Estimated settling times with control saturation (s):", np.array_str(t_settling_sat, precision=4, suppress_small=True))
+    tf = 5 * 60
+
+    T_theta = np.max(t_settling_no_sat)
+
+    Gamma_scale = -1.0 / (T_theta)
+
 
     J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_mamba,initialization="Mamba",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
 
