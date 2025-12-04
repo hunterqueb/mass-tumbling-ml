@@ -254,6 +254,28 @@ def vec(M):
     M = np.asarray(M)
     return M.reshape(-1, order="F")
 
+def random_inertia(principal = True):
+    # --- 1. Random eigenvalues (positive) ---
+    eig = np.random.rand(3)           # random positive values
+    eig = eig / np.sum(eig)           # normalize or not, your choice
+    # You can scale eig if you want a different trace or magnitude
+
+    # --- 2. Random orthonormal matrix Q via QR decomposition ---
+    M = np.random.randn(3,3)
+    Q, R = np.linalg.qr(M)
+
+    # Ensure det(Q) = +1 (proper rotation)
+    if np.linalg.det(Q) < 0:
+        Q[:,0] *= -1
+
+    # --- 3. Construct SPD inertia ---
+    J = Q @ np.diag(eig) @ Q.T
+
+    if principal:
+        # Return in principal axes (diagonal)
+        J = np.diag(eig)
+    return J
+
 def dyn_partial_adapt_v2(t, x, J_fixed, S, J_true, K_R, K_Om, Gamma, eps_reg, dith,control_torque_log,control_torque_max):
     """
     x = [q(4), w(3), alpha(3)]
@@ -1386,7 +1408,7 @@ if __name__ == "__main__":
 
     I_pred_lstm, I_pred_mamba, I_pred_transformer, I_pred_tcn, I_true, Rf_obs, qf_obs, wf_obs = main(plot=False)
     J_fixed = [[1200,100,-200],[100,2200,300], [-200,300,3100]] # from spacecraft modeling attitude determination and control quaternion based approach pg 140
-    Jt_est_rand = np.diag(np.random.rand(3))  
+    Jt_est_rand = random_inertia()
     I_true= 10.0 * I_true
     init_euler_angle = quat_to_euler(qf_obs)
 
@@ -1431,7 +1453,7 @@ if __name__ == "__main__":
     if swapped:
         qf_obs = -qf_obs
 
-    # control_torque_max = None  # No saturation
+    control_torque_max = None  # No saturation
     J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_mamba,initialization="Mamba",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
 
     # J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_transformer,initialization="Transformer",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
