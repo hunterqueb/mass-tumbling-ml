@@ -14,6 +14,7 @@ import torchinfo
 import matplotlib.pyplot as plt
 
 from qutils.integrators import ode45
+from qutils.tictoc import timer
 from qutils.ml.mamba import Mamba, MambaConfig 
 from qutils.ml import printModelParmSize
 from scipy.integrate import solve_ivp
@@ -1100,8 +1101,9 @@ def main(plot=True):
 
     I_pred_lstm, I_true, _ = validate(model_lstm,trainer_lstm,inference_num)
 
+    inferenceTime = timer()
     I_pred_mamba, _, _ = validate(model_mamba,trainer_mamba,inference_num)
-
+    inferenceTime.tocStr("Mamba inference time: ")
     I_pred_transformer, _, _ = validate(model_transformer,trainer_transformer,inference_num)
 
     I_pred_tcn, _, _ = validate(model_tcn,trainer_tcn,inference_num)
