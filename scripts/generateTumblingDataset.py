@@ -190,6 +190,7 @@ if __name__ == "__main__":
 
     # pick from a set of actual shapes
     pickShape = np.random.choice(['box', 'ellipsoid', 'cylinder', 'cone'], size=total_systems)
+    pickShape = np.random.choice(['cylinder_tube'], size=total_systems)
     I_list = []
     q0_list = []
     w0_list = []
@@ -245,12 +246,20 @@ if __name__ == "__main__":
             I1 = (1/12) * m * L**2
             I2 = 0
             I3 = (1/12) * m * (L)**2
+        elif shape == 'cylinder_tube':
+        # hollow cylinder (thin tube) with radius r1, r2, and height h
+            r1 = np.random.uniform(0.1, 1.0)
+            r2 = np.random.uniform(r1, 2*r1)
+            h = np.random.uniform(0.1, 3.0)
+            I1 = (1/12) * m * (3*(r2**2+r1**2) + h**2)
+            I2 = I1
+            I3 = 0.5 * m * (r2**2+r1**2)
         I_principal = np.diag([I1, I2, I3]) # generate random principal inertia values from shape
         I_rand = inertia_from_principal(I_principal,q0) # random orientation
         I_rand = project_spd_and_normalize(I_rand) # ensure SPD and trace=1
         
         I_list.append(I_rand)
-        I_list_real.append(I_principal)    
+        I_list_real.append(I_principal)
         # Initial attitude and angular velocity (body frame)
 
     I_true = I_list   

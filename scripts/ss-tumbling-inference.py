@@ -909,7 +909,7 @@ def principal_inertia_comparison(I_pred, I_true):
 
 # ======================== CLI demo ========================
 
-def main(plot=True):
+def main(validate_OOD=False,plot=True):
 
     from qutils.ml import getDevice
     device = getDevice()
@@ -924,7 +924,11 @@ def main(plot=True):
     file_path_val = Path(dataLoc+"val_" + str(args.T) + ".npz")
     if file_path_val.is_file() and not args.force:
         # load datasets
-        val_set = TorqueFreeDataset(file=dataLoc+"val_" + str(args.T) + ".npz",N=args.trainN, T=args.T, dt=args.dt, device=device, noise_std=args.noise)
+        if not validate_OOD:
+            val_set = TorqueFreeDataset(file=dataLoc+"val_" + str(args.T) + ".npz",N=args.trainN, T=args.T, dt=args.dt, device=device, noise_std=args.noise)
+        else:
+            print("Validating on OOD dataset")
+            val_set = TorqueFreeDataset(file=dataLoc+"OOD-val_" + str(args.T) + ".npz",N=args.trainN, T=args.T, dt=args.dt, device=device, noise_std=args.noise)
         print("Loaded datasets from", dataLoc)
 
     # plot a random sample from a set
@@ -1193,7 +1197,7 @@ def demo_adapt_partial_target(J_fixed = np.diag([20.0, 25.0, 15.0]),
         "A": 0,
         "w": 2.0 * np.pi * np.array([0.4, 0.7, 1.1], dtype=float),
     }
-    alpha0 = 0 * np.array([1.0, 1.0, 1.0], dtype=float)
+    alpha0 = 1 * np.array([1.0, 1.0, 1.0], dtype=float)
 
     x0 = np.concatenate([q0, w0, alpha0])
     control_torque_log = []
@@ -1369,6 +1373,7 @@ if __name__ == "__main__":
     ap.add_argument('--dmodel', type=int, default=64)
     ap.add_argument('--layers', type=int, default=2)
     ap.add_argument('--force', action='store_true', help='Force dataset regeneration')
+    ap.add_argument('--OOD', action='store_true', help='Validate on out-of-distribution dataset')
     ap.add_argument('--save',action='store_true', help='Save logs from training')
     ap.add_argument('--residual', type=str, default='tau', choices=['tau','wdot'])
     ap.add_argument('--data', type=str, default='data/shapes/', help='Path to dataset parent directory')
@@ -1406,7 +1411,7 @@ if __name__ == "__main__":
 
         print("Logging to", log_dir)
 
-    I_pred_lstm, I_pred_mamba, I_pred_transformer, I_pred_tcn, I_true, Rf_obs, qf_obs, wf_obs = main(plot=False)
+    I_pred_lstm, I_pred_mamba, I_pred_transformer, I_pred_tcn, I_true, Rf_obs, qf_obs, wf_obs = main(validate_OOD=args.OOD,plot=False)
     J_fixed = [[1200,100,-200],[100,2200,300], [-200,300,3100]] # from spacecraft modeling attitude determination and control quaternion based approach pg 140
     Jt_est_rand = random_inertia()
     I_true= 10.0 * I_true
@@ -1453,12 +1458,12 @@ if __name__ == "__main__":
     if swapped:
         qf_obs = -qf_obs
 
-    control_torque_max = None  # No saturation
+    # control_torque_max = None  # No saturation
     J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_mamba,initialization="Mamba",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
 
-    # J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_transformer,initialization="Transformer",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
+    J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_transformer,initialization="Transformer",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
 
-    # J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_tcn,initialization="TCN",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
+    J_hat_NN, J_true, Jt_true   = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_tcn,initialization="TCN",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
 
     J_hat_rand, J_true, Jt_true = demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=Jt_est_rand, initialization="random",Gamma_scale=Gamma_scale,Kom = Kom,Kr = Kr,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max)
 
