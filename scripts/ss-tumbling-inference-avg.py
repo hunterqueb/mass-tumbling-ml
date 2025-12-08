@@ -935,24 +935,6 @@ def main(validate_OOD=False,plot=True):
     sample_idx = np.random.randint(0, len(val_set))
     q_sample, w_sample, I_sample, dt_sample, _ = val_set[sample_idx]
     time_array = np.arange(0, args.T, dt_sample)[:q_sample.shape[0]]
-    if plot:
-        plt.figure(figsize=(12, 5))
-        plt.subplot(1, 2, 1)
-        plt.plot(time_array, w_sample.cpu().numpy())
-        plt.title('Angular Velocity (omega)')
-        plt.xlabel('Time (s)')
-        plt.ylabel('Omega (rad/s)')
-        plt.legend(['omega_x', 'omega_y', 'omega_z'])
-        plt.grid()
-        plt.subplot(1, 2, 2)
-        plt.plot(time_array, q_sample.cpu().numpy())
-        plt.title('Orientation (Quaternion)')
-        plt.xlabel('Time (s)')
-        plt.ylabel('Quaternion Components')
-        plt.legend(['q_w', 'q_x', 'q_y', 'q_z'])
-        plt.grid()
-        plt.tight_layout()
-
 
     val_set.convert_to_float32()
     val_set.to(device)
@@ -1244,19 +1226,15 @@ if __name__ == "__main__":
             qf_obs = -qf_obs
             swapped = True
         theta_max = 2 * np.arctan2(np.sqrt(np.sum(qf_obs[1:4]**2)), qf_obs[0])  # radian
-        print("Initial attitude error (rad):", theta_max)
         
         theta_design = 0.52
         Kr = 0.6 * control_torque_max / theta_design
         
         damping_ratio = 0.5
         Kom = (2.0 * damping_ratio * np.sqrt(Kr * np.linalg.eigvals(J_fixed)))
-        print(Kom, Kr)
 
         t_settling_no_sat = 8 * np.linalg.eigvals(J_fixed) / Kom
         t_settling_sat = 2 * np.sqrt(theta_max * np.linalg.eigvals(J_fixed) / control_torque_max)
-        print("Estimated settling times without control saturation (s):", np.array_str(t_settling_no_sat, precision=4, suppress_small=True))
-        print("Estimated settling times with control saturation (s):", np.array_str(t_settling_sat, precision=4, suppress_small=True))
         tf = 5 * 60
 
         T_theta = np.max(t_settling_no_sat)
@@ -1267,7 +1245,8 @@ if __name__ == "__main__":
             qf_obs = -qf_obs
 
         # control_torque_max = None  # No saturation
-        
+        demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_lstm,initialization="LSTM",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max,frobErr=frobErr_lstm)
+
         demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_mamba,initialization="Mamba",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max,frobErr=frobErr_mamba)
 
         demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_transformer,initialization="Transformer",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max,frobErr=frobErr_transformer)
