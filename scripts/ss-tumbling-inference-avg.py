@@ -1272,6 +1272,8 @@ if __name__ == "__main__":
     plt.axhline(y=np.mean(frobErr_tcn), color='C3', linestyle='--', label='TCN Mean')
     plt.axhline(y=np.mean(frobErr_rand), color='C4', linestyle='--', label='Random Init Mean')
     plt.legend()
-
+    if args.save:
+        plt.savefig(os.path.join(log_dir, "frob_error_adaptive_control.png"))
+        
     if not args.save:
         plt.show()
