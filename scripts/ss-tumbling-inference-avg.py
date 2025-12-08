@@ -1202,7 +1202,7 @@ if __name__ == "__main__":
     frobErr_tcn = []
     frobErr_rand = []
     
-    for i in range(args.valN):
+    for i in range(5):
         I_pred_lstm = I_pred_lstm_all[i].cpu().numpy()
         I_pred_mamba = I_pred_mamba_all[i].cpu().numpy()
         I_pred_transformer = I_pred_transformer_all[i].cpu().numpy()
@@ -1265,6 +1265,13 @@ if __name__ == "__main__":
     plt.xlabel('Validation Sample Index')
     plt.ylabel('Final Frobenius Error ||Jt_hat - Jt_true||_F')
     plt.title('Frobenius Error after Adaptive Control with Partial Inertia Knowledge')
+    # plot mean lines
+    plt.axhline(y=np.mean(frobErr_lstm), color='C0', linestyle='--', label='LSTM Mean')
+    plt.axhline(y=np.mean(frobErr_mamba), color='C1', linestyle='--', label='Mamba Mean')
+    plt.axhline(y=np.mean(frobErr_transformer), color='C2', linestyle='--', label='Transformer Mean')
+    plt.axhline(y=np.mean(frobErr_tcn), color='C3', linestyle='--', label='TCN Mean')
+    plt.axhline(y=np.mean(frobErr_rand), color='C4', linestyle='--', label='Random Init Mean')
+    plt.legend()
 
     if not args.save:
         plt.show()
