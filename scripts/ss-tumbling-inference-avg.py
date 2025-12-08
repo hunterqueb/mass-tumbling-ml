@@ -1202,7 +1202,7 @@ if __name__ == "__main__":
     frobErr_tcn = []
     frobErr_rand = []
     
-    for i in range(5):
+    for i in range(args.valN):
         I_pred_lstm = I_pred_lstm_all[i].cpu().numpy()
         I_pred_mamba = I_pred_mamba_all[i].cpu().numpy()
         I_pred_transformer = I_pred_transformer_all[i].cpu().numpy()
@@ -1245,18 +1245,14 @@ if __name__ == "__main__":
             qf_obs = -qf_obs
 
         # control_torque_max = None  # No saturation
+        print(f"Running adaptive control with partial inertia knowledge on sample {i+1}/{args.valN}...", end="\r")
         demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_lstm,initialization="LSTM",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max,frobErr=frobErr_lstm)
-
         demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_mamba,initialization="Mamba",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max,frobErr=frobErr_mamba)
-
         demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_transformer,initialization="Transformer",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max,frobErr=frobErr_transformer)
-
         demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_tcn,initialization="TCN",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max,frobErr=frobErr_tcn)
-
         demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=Jt_est_rand, initialization="random",Gamma_scale=Gamma_scale,Kom = Kom,Kr = Kr,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max,frobErr=frobErr_rand)
-
     # plot frobErr
-    plt.figure(figsize=(8,6))
+    plt.figure(figsize=(12,6))
     plt.semilogy(frobErr_lstm, label='LSTM')
     plt.semilogy(frobErr_mamba, label='Mamba')
     plt.semilogy(frobErr_transformer, label='Transformer')
