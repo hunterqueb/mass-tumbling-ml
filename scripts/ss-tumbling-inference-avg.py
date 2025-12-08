@@ -1156,6 +1156,7 @@ if __name__ == "__main__":
     ap.add_argument('--layers', type=int, default=2)
     ap.add_argument('--force', action='store_true', help='Force dataset regeneration')
     ap.add_argument('--OOD', action='store_true', help='Validate on out-of-distribution dataset')
+    ap.add_argument('--controlSat', action='store_true', help='Use control saturation in adaptive control demo')
     ap.add_argument('--save',action='store_true', help='Save logs from training')
     ap.add_argument('--residual', type=str, default='tau', choices=['tau','wdot'])
     ap.add_argument('--data', type=str, default='data/shapes/', help='Path to dataset parent directory')
@@ -1244,7 +1245,10 @@ if __name__ == "__main__":
         if swapped:
             qf_obs = -qf_obs
 
-        # control_torque_max = None  # No saturation
+        if args.controlSat == False:
+            control_torque_max = None  # No saturation
+        else:
+            control_torque_max = control_torque_max
         print(f"Running adaptive control with partial inertia knowledge on sample {i+1}/{args.valN}...", end="\r")
         demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_lstm,initialization="LSTM",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max,frobErr=frobErr_lstm)
         demo_adapt_partial_target(J_fixed = J_fixed, Jt_diag_true=I_true, Jt_est=I_pred_mamba,initialization="Mamba",Kom = Kom,Kr = Kr,Gamma_scale=Gamma_scale,R_bt=Rf_obs,q0=qf_obs,w0=wf_obs,tf=tf,control_torque_max=control_torque_max,frobErr=frobErr_mamba)
@@ -1260,7 +1264,7 @@ if __name__ == "__main__":
     plt.semilogy(frobErr_rand, label='Random Init')
     plt.xlabel('Validation Sample Index')
     plt.ylabel('Final Frobenius Error ||Jt_hat - Jt_true||_F')
-    plt.title('Frobenius Error after Adaptive Control with Partial Inertia Knowledge')
+    plt.title('Frobenius Error after Adaptive Control with Partial Inertia Knowledge (Control Saturation=' + str(args.controlSat) + ', OOD=' + str(args.OOD) + ')')
     # plot mean lines
     plt.axhline(y=np.mean(frobErr_lstm), color='C0', linestyle='--', label='LSTM Mean')
     plt.axhline(y=np.mean(frobErr_mamba), color='C1', linestyle='--', label='Mamba Mean')
